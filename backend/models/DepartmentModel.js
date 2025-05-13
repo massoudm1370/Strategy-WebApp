@@ -2,21 +2,35 @@ const db = require('../db');
 
 const DepartmentModel = {
   getAll: (callback) => {
-    db.all("SELECT * FROM departments", callback);
+    try {
+      const stmt = db.prepare("SELECT * FROM departments");
+      const rows = stmt.all();
+      callback(null, rows);
+    } catch (err) {
+      callback(err);
+    }
   },
 
   add: (name, callback) => {
-    db.run("INSERT INTO departments (name) VALUES (?)", [name], function (err) {
-      if (err) callback(err);
-      else callback(null, { id: this.lastID, name });
-    });
+    try {
+      const stmt = db.prepare("INSERT INTO departments (name) VALUES (?)");
+      const info = stmt.run(name);
+      callback(null, { id: info.lastInsertRowid, name });
+    } catch (err) {
+      callback(err);
+    }
   },
 
   delete: (id, callback) => {
-    db.run("DELETE FROM departments WHERE id = ?", [id], function (err) {
-      callback(err, { success: this.changes > 0 });
-    });
+    try {
+      const stmt = db.prepare("DELETE FROM departments WHERE id = ?");
+      const info = stmt.run(id);
+      callback(null, { success: info.changes > 0 });
+    } catch (err) {
+      callback(err);
+    }
   }
 };
 
 module.exports = DepartmentModel;
+

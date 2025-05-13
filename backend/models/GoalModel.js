@@ -2,9 +2,16 @@ const db = require('../db');
 
 const GoalModel = {
   // دریافت همه اهداف
-  getAll: (callback) => {
-    db.all("SELECT * FROM goals", callback);
-  },
+getAll: (callback) => {
+  try {
+    const stmt = db.prepare("SELECT * FROM goals");
+    const rows = stmt.all();
+    callback(null, rows);
+  } catch (err) {
+    callback(err);
+  }
+},
+
 
   // افزودن هدف جدید
   add: (goal, callback) => {

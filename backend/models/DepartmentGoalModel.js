@@ -2,9 +2,15 @@ const db = require('../db');
 
 const DepartmentGoalModel = {
   // دریافت همه رکوردها
-  getAll: (callback) => {
-    db.all("SELECT * FROM department_goals", callback);
-  },
+getAll: (callback) => {
+  try {
+    const stmt = db.prepare("SELECT * FROM department_goals");
+    const rows = stmt.all();
+    callback(null, rows);
+  } catch (err) {
+    callback(err);
+  }
+},
 
   // افزودن رکورد جدید
   add: (goal, callback) => {
