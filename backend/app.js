@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const Database = require('better-sqlite3');  // ✅ تغییر به better-sqlite3
 const path = require('path');
 const fs = require('fs');
 
@@ -12,9 +11,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Database Connection
-const db = new Database('./strategy.db');  // ✅ تغییر به better-sqlite3
-console.log('Connected to SQLite database.');
+// ✅ اتصال به دیتابیس از طریق db.js
+const db = require('./db');
 
 // Initialize Database Structure
 const initSQL = fs.readFileSync('./init.sql', 'utf-8');

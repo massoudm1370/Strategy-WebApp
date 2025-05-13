@@ -1,9 +1,8 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./strategy.db', (err) => {
-  if (err) {
-    console.error('❌ خطا در اتصال به دیتابیس:', err.message);
-  } else {
-    console.log('✅ اتصال به دیتابیس برقرار شد.');
-  }
-});
+const Database = require('better-sqlite3');  // ✅ تغییر به better-sqlite3
+
+// اتصال به دیتابیس
+const db = new Database('./strategy.db');
+console.log('✅ اتصال به دیتابیس برقرار شد.');
+
+// خروجی ماژول
 module.exports = db;
