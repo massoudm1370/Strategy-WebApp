@@ -1,5 +1,6 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./strategy.db');
+const Database = require('better-sqlite3');
+const db = new Database('./strategy.db');
+
 
 const adminUser = {
   name: "مدیر سیستم",

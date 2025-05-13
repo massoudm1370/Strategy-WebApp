@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');  // ✅ تغییر به better-sqlite3
 const path = require('path');
 const fs = require('fs');
 
@@ -13,19 +13,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Database Connection
-const db = new sqlite3.Database('./strategy.db', (err) => {
-    if (err) console.error('Error opening database:', err.message);
-    else {
-        console.log('Connected to SQLite database.');
+const db = new Database('./strategy.db');  // ✅ تغییر به better-sqlite3
+console.log('Connected to SQLite database.');
 
-        // Initialize Database Structure
-        const initSQL = fs.readFileSync('./init.sql', 'utf-8');
-        db.exec(initSQL, (err) => {
-            if (err) console.error('Error initializing database:', err.message);
-            else console.log('Database initialized.');
-        });
-    }
-});
+// Initialize Database Structure
+const initSQL = fs.readFileSync('./init.sql', 'utf-8');
+db.exec(initSQL);
+console.log('Database initialized.');
 
 // Make DB available to routers
 app.use((req, res, next) => {
@@ -46,7 +40,6 @@ app.use('/api/goals', goalsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/departments', departmentsRoutes);
 app.use('/api/strategy', strategyRoutes);
-
 
 // Start Server
 app.listen(PORT, () => {
