@@ -19,11 +19,17 @@ export default function OrganizationalGoalsManagement() {
 
   const [filterBySuccess, setFilterBySuccess] = useState("all");
 
-  // Load data from localStorage
-  useEffect(() => {
-    const savedGoals = JSON.parse(localStorage.getItem("organizationalGoals")) || [];
-    setGoals(savedGoals);
-  }, []);
+  // Load data from API on mount
+useEffect(() => {
+  fetch('/api/goals')
+    .then(res => res.json())
+    .then(data => setGoals(data))
+    .catch((error) => {
+      console.error('❌ خطا در دریافت اهداف از سرور:', error);
+      setGoals([]);
+    });
+}, []);
+
 
   // Handle input changes
   const handleChange = (e) => {
@@ -54,7 +60,6 @@ export default function OrganizationalGoalsManagement() {
     return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
   };
 
-  // Handle add new goal
   const handleAddGoal = () => {
     const weightValue = parseFloat(newGoal.weight) || 0;
 
@@ -66,11 +71,27 @@ export default function OrganizationalGoalsManagement() {
       return;
     }
 
-    const updatedGoals = [...goals, newGoal];
-    setGoals(updatedGoals);
-    localStorage.setItem("organizationalGoals", JSON.stringify(updatedGoals));
-    resetForm();
+    // ارسال هدف به بک‌اند
+    fetch('/api/goals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGoal)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('خطا در ذخیره در سرور');
+        return res.json();
+      })
+      .then(savedGoal => {
+        const updatedGoals = [...goals, savedGoal];
+        setGoals(updatedGoals);
+        resetForm();
+      })
+      .catch(err => {
+        console.error('❌ خطا در ذخیره هدف:', err);
+        alert('خطا در ذخیره در سرور');
+      });
   };
+
 
   // Reset form
   const resetForm = () => {
@@ -90,14 +111,27 @@ export default function OrganizationalGoalsManagement() {
   };
 
   // Delete goal
-  const handleDelete = (index) => {
-    if (!window.confirm("آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟")) return;
-    
-    const updatedGoals = [...goals];
-    updatedGoals.splice(index, 1);
-    setGoals(updatedGoals);
-    localStorage.setItem("organizationalGoals", JSON.stringify(updatedGoals));
-  };
+const handleDelete = (goalId) => {
+  if (!window.confirm("آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟")) return;
+
+  fetch(`/api/goals/${goalId}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(result => {
+      console.log('🗑️ حذف انجام شد:', result);
+      if (result.success) {
+        const updatedGoals = goals.filter(goal => goal.id !== goalId);
+        setGoals(updatedGoals);
+      } else {
+        alert('خطا در حذف هدف');
+      }
+    })
+    .catch(err => {
+      console.error('❌ خطا در حذف هدف:', err);
+      alert('خطا در برقراری ارتباط با سرور');
+    });
+};
+
+
 
   // Edit goal
   const handleEdit = (index) => {
@@ -442,7 +476,7 @@ export default function OrganizationalGoalsManagement() {
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                       <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
                         <button 
-                          onClick={() => handleEdit(index)} 
+                          onClick={() => handleEdit(goal.id)} 
                           style={{ 
                             backgroundColor: "#4CAF50", 
                             color: "white", 
@@ -453,7 +487,7 @@ export default function OrganizationalGoalsManagement() {
                           }}
                         >ویرایش</button>
                         <button 
-                          onClick={() => handleDelete(index)} 
+                          onClick={() => handleDelete(goal.id)} 
                           style={{ 
                             backgroundColor: "#f44336", 
                             color: "white", 

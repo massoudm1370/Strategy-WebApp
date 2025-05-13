@@ -5,35 +5,44 @@ export default function DepartmentGoalsManagement() {
   const [departments, setDepartments] = useState([]);
   const [organizationalGoals, setOrganizationalGoals] = useState([]);
   const [departmentGoals, setDepartmentGoals] = useState([]);
-
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedOrgGoal, setSelectedOrgGoal] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedHalf, setSelectedHalf] = useState("H1");
-
   const [newKeyResult, setNewKeyResult] = useState({
-  keyResult: "",
-  weight: "",
-  target: "",
-  failure: "",
-  unit: "",
-  baseline: "",
-  calculationMethod: "",
-  definitionOfDone: "",
-  monthlyProgress: ["", "", "", "", "", ""], // ✅ اینجا همیشه 6 خانه داریم
-  ytd: "",
-  finalAchievement: "",
-  status: ""
-});
-
-  // Filter
+    keyResult: "",
+    weight: "",
+    target: "",
+    failure: "",
+    unit: "",
+    baseline: "",
+    calculationMethod: "",
+    definitionOfDone: "",
+    monthlyProgress: ["", "", "", "", "", ""],
+    ytd: "",
+    finalAchievement: "",
+    status: ""
+  });
   const [selectedFilterDepartment, setSelectedFilterDepartment] = useState("");
+  const [editingIndex, setEditingIndex] = useState(null); // Track editing state
 
-  // Load data from localStorage
+  // Load data from API
   useEffect(() => {
-    setDepartments(JSON.parse(localStorage.getItem("departments")) || []);
-    setOrganizationalGoals(JSON.parse(localStorage.getItem("organizationalGoals")) || []);
-    setDepartmentGoals(JSON.parse(localStorage.getItem("departmentGoals")) || []);
+    Promise.all([
+      fetch('/api/departments').then(res => res.json()),
+      fetch('/api/goals').then(res => res.json()),
+      fetch('/api/department-goals').then(res => res.json())
+    ])
+      .then(([deptData, goalData, dGoalData]) => {
+        setDepartments(deptData);
+        setOrganizationalGoals(goalData);
+        setDepartmentGoals(dGoalData);
+      })
+      .catch(() => {
+        setDepartments([]);
+        setOrganizationalGoals([]);
+        setDepartmentGoals([]);
+      });
   }, []);
 
   // Handle input changes
@@ -48,7 +57,7 @@ export default function DepartmentGoalsManagement() {
     setNewKeyResult({ ...newKeyResult, monthlyProgress: updatedProgress });
   };
 
-  // Add new key result
+  // Add/edit key result
   const handleAddKeyResult = () => {
     if (!newKeyResult.keyResult || !selectedDepartment || !selectedOrgGoal) {
       alert("لطفاً تمام فیلدهای الزامی را پر کنید");
@@ -56,8 +65,6 @@ export default function DepartmentGoalsManagement() {
     }
 
     const weightValue = parseFloat(newKeyResult.weight) || 0;
-
-    // Check total weight for selected department
     const totalWeight = departmentGoals
       .filter(goal => goal.department === selectedDepartment)
       .reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
@@ -75,13 +82,31 @@ export default function DepartmentGoalsManagement() {
       ...newKeyResult
     };
 
-    const updatedGoals = [...departmentGoals, newEntry];
-    setDepartmentGoals(updatedGoals);
-    localStorage.setItem("departmentGoals", JSON.stringify(updatedGoals));
-    resetForm();
+    const url = editingIndex !== null 
+      ? `/api/department-goals/${editingIndex}` 
+      : '/api/department-goals';
+
+    fetch(url, {
+      method: editingIndex !== null ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEntry)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('API Error');
+        return fetch('/api/department-goals').then(res => res.json());
+      })
+      .then(updatedData => {
+        setDepartmentGoals(updatedData);
+        resetForm();
+        setEditingIndex(null);
+      })
+      .catch(err => {
+        console.error(err);
+        alert(`خطا در ${editingIndex !== null ? 'به‌روزرسانی' : 'افزودن'} Key Result`);
+      });
   };
 
-  // Reset form after submission
+  // Reset form
   const resetForm = () => {
     setNewKeyResult({
       keyResult: "",
@@ -102,42 +127,49 @@ export default function DepartmentGoalsManagement() {
   };
 
   // Delete key result
-  const handleDelete = (index) => {
-    if (!window.confirm("آیا مطمئن هستید که می‌خواهید این مورد را حذف کنید؟")) return;
-    
-    const updatedGoals = [...departmentGoals];
-    updatedGoals.splice(index, 1);
-    setDepartmentGoals(updatedGoals);
-    localStorage.setItem("departmentGoals", JSON.stringify(updatedGoals));
-  };
+ const handleDelete = (id) => {
+  if (!window.confirm("آیا مطمئن هستید که می‌خواهید این مورد را حذف کنید؟")) return;
+
+  fetch(`/api/department-goals/${id}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(result => {
+      if (result.success) {
+        const updatedGoals = departmentGoals.filter(goal => goal.id !== id);
+        setDepartmentGoals(updatedGoals);
+      }
+    })
+    .catch(err => {
+      console.error('❌ خطا در حذف هدف دپارتمان:', err);
+      alert('خطا در حذف هدف دپارتمان از سرور');
+    });
+};
 
   // Edit key result
-  const handleEdit = (index) => {
-    const krToEdit = departmentGoals[index];
-    setSelectedDepartment(krToEdit.department);
-    setSelectedOrgGoal(krToEdit.orgGoalTitle);
-    setSelectedYear(krToEdit.year);
-    setSelectedHalf(krToEdit.half);
-    setNewKeyResult({
-      keyResult: krToEdit.keyResult,
-      weight: krToEdit.weight,
-      target: krToEdit.target,
-      failure: krToEdit.failure,
-      unit: krToEdit.unit,
-      baseline: krToEdit.baseline,
-      calculationMethod: krToEdit.calculationMethod,
-      definitionOfDone: krToEdit.definitionOfDone,
-      monthlyProgress: krToEdit.monthlyProgress,
-      ytd: krToEdit.ytd || "",
-      finalAchievement: krToEdit.finalAchievement,
-      status: krToEdit.status
-    });
+  const handleEdit = (id) => {
+  const krToEdit = departmentGoals.find(goal => goal.id === id);
+  if (!krToEdit) return;
 
-    const updatedGoals = [...departmentGoals];
-    updatedGoals.splice(index, 1);
-    setDepartmentGoals(updatedGoals);
-    localStorage.setItem("departmentGoals", JSON.stringify(updatedGoals));
-  };
+  setSelectedDepartment(krToEdit.department);
+  setSelectedOrgGoal(krToEdit.orgGoalTitle);
+  setSelectedYear(krToEdit.year);
+  setSelectedHalf(krToEdit.half);
+  setNewKeyResult({
+    keyResult: krToEdit.keyResult,
+    weight: krToEdit.weight,
+    target: krToEdit.target,
+    failure: krToEdit.failure,
+    unit: krToEdit.unit,
+    baseline: krToEdit.baseline,
+    calculationMethod: krToEdit.calculationMethod,
+    definitionOfDone: krToEdit.definitionOfDone,
+    monthlyProgress: krToEdit.monthlyProgress,
+    ytd: krToEdit.ytd || "",
+    finalAchievement: krToEdit.finalAchievement,
+    status: krToEdit.status
+  });
+  setEditingIndex(id);  // اینجا حالا id ذخیره می‌شود، نه index
+};
+
 
   // Calculate YTD automatically from last filled month
   const calculateAutoYTD = (monthlyProgress) => {
@@ -147,19 +179,14 @@ export default function DepartmentGoalsManagement() {
   // Calculate success percentage using YTD if available
   const calculateSuccessPercentage = (ytdValue, monthlyProgress, target, failure) => {
     const valueToUse = ytdValue || calculateAutoYTD(monthlyProgress);
-    
     if (!valueToUse || !target || !failure) return 0;
-    
     const valueNum = parseFloat(valueToUse);
     const targetNum = parseFloat(target);
     const failureNum = parseFloat(failure);
-    
     if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
     if (targetNum <= failureNum) return 0;
-    
     if (valueNum >= targetNum) return 100;
     if (valueNum <= failureNum) return 0;
-    
     return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
   };
 
@@ -167,7 +194,6 @@ export default function DepartmentGoalsManagement() {
   const ProgressBar = ({ percentage }) => {
     const color = percentage >= 80 ? '#28a745' : 
                   percentage >= 50 ? '#ffc107' : '#dc3545';
-    
     return (
       <div style={{ 
         width: '100%', 
@@ -194,7 +220,7 @@ export default function DepartmentGoalsManagement() {
     : departmentGoals;
 
   return (
-    <div style={{ 
+       <div style={{ 
       padding: "20px", 
       direction: "rtl", 
       fontFamily: "Vazirmatn, sans-serif",
@@ -545,7 +571,9 @@ export default function DepartmentGoalsManagement() {
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                       <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
                         <button 
-                          onClick={() => handleEdit(departmentGoals.indexOf(kr))} 
+                          onClick={() => handleEdit(kr.id)}
+                          onClick={() => handleDelete(kr.id)}
+
                           style={{ 
                             backgroundColor: "#4CAF50", 
                             color: "white", 
@@ -556,7 +584,7 @@ export default function DepartmentGoalsManagement() {
                           }}
                         >ویرایش</button>
                         <button 
-                          onClick={() => handleDelete(departmentGoals.indexOf(kr))} 
+                          onClick={() => handleDelete(kr.id)} 
                           style={{ 
                             backgroundColor: "#f44336", 
                             color: "white", 

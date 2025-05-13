@@ -39,9 +39,30 @@ const UserModel = {
     });
   },
 
-  // ✅ متد احراز هویت
+  // ✅ متد احراز هویت با لاگ کامل
   authenticate: (username, password, callback) => {
-    db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], callback);
+    console.log("🟢 تلاش برای ورود با:", { username, password });
+
+    // لاگ همه کاربران دیتابیس
+    db.all("SELECT * FROM users", [], (err, rows) => {
+      if (err) {
+        console.error("❌ خطا در دریافت کاربران:", err.message);
+      } else {
+        console.log("🟢 کاربران فعلی دیتابیس:", rows);
+      }
+    });
+
+    // بررسی وجود کاربر
+    db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, user) => {
+      if (err) {
+        console.error("❌ خطا در اجرای کوئری:", err.message);
+      } else if (!user) {
+        console.log("🔴 کاربر یافت نشد برای:", { username, password });
+      } else {
+        console.log("🟢 کاربر یافت شد:", user);
+      }
+      callback(err, user);
+    });
   }
 };
 

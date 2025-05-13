@@ -9,12 +9,11 @@ export default function LoginPage() {
 
   const handleLogin = () => {
     fetch('http://localhost:5000/api/users/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username, password })
-})
-
-      .then(res => res.ok ? res.json() : Promise.reject("نام کاربری یا رمز عبور نادرست است."))
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+      .then(res => res.ok ? res.json() : Promise.reject(new Error("نام کاربری یا رمز عبور نادرست است.")))
       .then(user => {
         localStorage.setItem("loggedInUser", JSON.stringify(user));
         navigate("/dashboard");
@@ -41,7 +40,7 @@ export default function LoginPage() {
         textAlign: "center"
       }}>
         <h2>ورود به سیستم</h2>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p style={{ color: "red" }}>{error.message || error.toString()}</p>}
         <input
           type="text"
           placeholder="نام کاربری"
