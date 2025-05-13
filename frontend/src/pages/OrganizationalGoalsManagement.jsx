@@ -19,9 +19,10 @@ export default function OrganizationalGoalsManagement() {
 
   const [filterBySuccess, setFilterBySuccess] = useState("all");
 
-  // Load data from API on mount
+  // Load data from API on mountconst baseUrl = process.env.REACT_APP_API_URL;
+
 useEffect(() => {
-  fetch('/api/goals')
+  fetch(`${baseUrl}/goals`)
     .then(res => res.json())
     .then(data => setGoals(data))
     .catch((error) => {
@@ -71,26 +72,27 @@ useEffect(() => {
       return;
     }
 
-    // ارسال هدف به بک‌اند
-    fetch('/api/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newGoal)
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('خطا در ذخیره در سرور');
-        return res.json();
-      })
-      .then(savedGoal => {
-        const updatedGoals = [...goals, savedGoal];
-        setGoals(updatedGoals);
-        resetForm();
-      })
-      .catch(err => {
-        console.error('❌ خطا در ذخیره هدف:', err);
-        alert('خطا در ذخیره در سرور');
-      });
-  };
+    // ارسال هدف به بک‌اندconst baseUrl = process.env.REACT_APP_API_URL;
+
+fetch(`${baseUrl}/goals`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(newGoal)
+})
+  .then(res => {
+    if (!res.ok) throw new Error('خطا در ذخیره در سرور');
+    return res.json();
+  })
+  .then(savedGoal => {
+    const updatedGoals = [...goals, savedGoal];
+    setGoals(updatedGoals);
+    resetForm();
+  })
+  .catch(err => {
+    console.error('❌ خطا در ذخیره هدف:', err);
+    alert('خطا در ذخیره در سرور');
+  });
+
 
 
   // Reset form

@@ -6,31 +6,34 @@ export default function KPIManagement() {
   const [unit, setUnit] = useState("");
   const [target, setTarget] = useState("");
   const [formula, setFormula] = useState("");
+const baseUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetch('/api/kpis')
-      .then(res => res.json())
-      .then(setKpis)
-      .catch(err => console.error("خطا در دریافت KPIها:", err));
-  }, []);
+useEffect(() => {
+  fetch(`${baseUrl}/kpis`)
+    .then(res => res.json())
+    .then(setKpis)
+    .catch(err => console.error("خطا در دریافت KPIها:", err));
+}, []);
 
-  const handleAddKPI = () => {
-    const newKpi = { name, unit, target, formula };
-    fetch('/api/kpis', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newKpi)
+const handleAddKPI = () => {
+  const newKpi = { name, unit, target, formula };
+
+  fetch(`${baseUrl}/kpis`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newKpi)
+  })
+    .then(res => res.json())
+    .then(saved => {
+      setKpis([...kpis, saved]);
+      setName("");
+      setUnit("");
+      setTarget("");
+      setFormula("");
     })
-      .then(res => res.json())
-      .then(saved => {
-        setKpis([...kpis, saved]);
-        setName("");
-        setUnit("");
-        setTarget("");
-        setFormula("");
-      })
-      .catch(err => console.error("خطا در افزودن KPI:", err));
-  };
+    .catch(err => console.error("خطا در افزودن KPI:", err));
+};
+
 
   const handleDeleteKPI = (id) => {
     fetch(`/api/kpis/${id}`, { method: 'DELETE' })

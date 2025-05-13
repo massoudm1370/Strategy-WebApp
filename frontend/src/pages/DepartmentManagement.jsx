@@ -3,31 +3,33 @@ import { useState, useEffect } from "react";
 export default function DepartmentManagement() {
   const [departments, setDepartments] = useState([]);
   const [departmentName, setDepartmentName] = useState("");
+const baseUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetch('/api/departments')
-      .then(res => res.json())
-      .then(setDepartments)
-      .catch(err => console.error("خطا در دریافت دپارتمان‌ها:", err));
-  }, []);
+useEffect(() => {
+  fetch(`${baseUrl}/departments`)
+    .then(res => res.json())
+    .then(setDepartments)
+    .catch(err => console.error("خطا در دریافت دپارتمان‌ها:", err));
+}, []);
 
-  const handleAddDepartment = () => {
-    if (!departmentName.trim()) return;
+const handleAddDepartment = () => {
+  if (!departmentName.trim()) return;
 
-    const newDepartment = { name: departmentName };
+  const newDepartment = { name: departmentName };
 
-    fetch('/api/departments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newDepartment)
+  fetch(`${baseUrl}/departments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newDepartment)
+  })
+    .then(res => res.json())
+    .then(saved => {
+      setDepartments([...departments, saved]);
+      setDepartmentName("");
     })
-      .then(res => res.json())
-      .then(saved => {
-        setDepartments([...departments, saved]);
-        setDepartmentName("");
-      })
-      .catch(err => console.error("خطا در افزودن دپارتمان:", err));
-  };
+    .catch(err => console.error("خطا در افزودن دپارتمان:", err));
+};
+
 
   const handleDeleteDepartment = (id) => {
     fetch(`/api/departments/${id}`, { method: 'DELETE' })

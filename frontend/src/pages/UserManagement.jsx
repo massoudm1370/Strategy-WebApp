@@ -16,18 +16,20 @@ export default function UserManagement() {
   const [filterRole, setFilterRole] = useState("همه");
   const [filterDepartment, setFilterDepartment] = useState("همه");
   const [searchQuery, setSearchQuery] = useState("");
+const baseUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetch('/api/users')
-      .then(res => res.json())
-      .then(setUsers)
-      .catch(err => console.error("خطا در دریافت کاربران", err));
+useEffect(() => {
+  fetch(`${baseUrl}/users`)
+    .then(res => res.json())
+    .then(setUsers)
+    .catch(err => console.error("خطا در دریافت کاربران", err));
 
-    fetch('/api/departments')
-      .then(res => res.json())
-      .then(setDepartments)
-      .catch(err => console.error("خطا در دریافت دپارتمان‌ها", err));
-  }, []);
+  fetch(`${baseUrl}/departments`)
+    .then(res => res.json())
+    .then(setDepartments)
+    .catch(err => console.error("خطا در دریافت دپارتمان‌ها", err));
+}, []);
+
 
   const handleChange = (e) => setNewUser({ ...newUser, [e.target.name]: e.target.value });
 

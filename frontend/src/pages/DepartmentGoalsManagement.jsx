@@ -27,23 +27,19 @@ export default function DepartmentGoalsManagement() {
   const [editingIndex, setEditingIndex] = useState(null); // Track editing state
 
   // Load data from API
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/departments').then(res => res.json()),
-      fetch('/api/goals').then(res => res.json()),
-      fetch('/api/department-goals').then(res => res.json())
-    ])
-      .then(([deptData, goalData, dGoalData]) => {
-        setDepartments(deptData);
-        setOrganizationalGoals(goalData);
-        setDepartmentGoals(dGoalData);
-      })
-      .catch(() => {
-        setDepartments([]);
-        setOrganizationalGoals([]);
-        setDepartmentGoals([]);
-      });
-  }, []);
+  const baseUrl = process.env.REACT_APP_API_URL;
+
+Promise.all([
+  fetch(`${baseUrl}/departments`).then(res => res.json()),
+  fetch(`${baseUrl}/goals`).then(res => res.json()),
+  fetch(`${baseUrl}/department-goals`).then(res => res.json())
+])
+  .then(([deptData, goalData, dGoalData]) => {
+    // handle data
+  })
+  .catch(err => {
+    console.error('❌ خطا در دریافت اطلاعات:', err);
+  });
 
   // Handle input changes
   const handleKRChange = (e) => {
@@ -85,26 +81,28 @@ export default function DepartmentGoalsManagement() {
     const url = editingIndex !== null 
       ? `/api/department-goals/${editingIndex}` 
       : '/api/department-goals';
+const baseUrl = process.env.REACT_APP_API_URL;
 
-    fetch(url, {
-      method: editingIndex !== null ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newEntry)
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('API Error');
-        return fetch('/api/department-goals').then(res => res.json());
-      })
-      .then(updatedData => {
-        setDepartmentGoals(updatedData);
-        resetForm();
-        setEditingIndex(null);
-      })
-      .catch(err => {
-        console.error(err);
-        alert(`خطا در ${editingIndex !== null ? 'به‌روزرسانی' : 'افزودن'} Key Result`);
-      });
-  };
+fetch(url, {
+  method: editingIndex !== null ? 'PUT' : 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(newEntry)
+})
+  .then(res => {
+    if (!res.ok) throw new Error('API Error');
+    // ✅ اصلاح این خط با baseUrl
+    return fetch(`${baseUrl}/department-goals`).then(res => res.json());
+  })
+  .then(updatedData => {
+    setDepartmentGoals(updatedData);
+    resetForm();
+    setEditingIndex(null);
+  })
+  .catch(err => {
+    console.error(err);
+    alert(`خطا در ${editingIndex !== null ? 'به‌روزرسانی' : 'افزودن'} Key Result`);
+  });
+
 
   // Reset form
   const resetForm = () => {

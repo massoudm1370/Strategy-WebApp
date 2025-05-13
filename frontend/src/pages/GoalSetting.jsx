@@ -11,41 +11,43 @@ export default function GoalSetting() {
 
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
+const baseUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetch('/api/goals')
-      .then(res => res.json())
-      .then(setGoals)
-      .catch(err => console.error("خطا در دریافت اهداف", err));
+useEffect(() => {
+  fetch(`${baseUrl}/goals`)
+    .then(res => res.json())
+    .then(setGoals)
+    .catch(err => console.error("خطا در دریافت اهداف", err));
 
-    fetch('/api/departments')
-      .then(res => res.json())
-      .then(setDepartments)
-      .catch(err => console.error("خطا در دریافت دپارتمان‌ها", err));
+  fetch(`${baseUrl}/departments`)
+    .then(res => res.json())
+    .then(setDepartments)
+    .catch(err => console.error("خطا در دریافت دپارتمان‌ها", err));
 
-    fetch('/api/users')
-      .then(res => res.json())
-      .then(setUsers)
-      .catch(err => console.error("خطا در دریافت کاربران", err));
-  }, []);
+  fetch(`${baseUrl}/users`)
+    .then(res => res.json())
+    .then(setUsers)
+    .catch(err => console.error("خطا در دریافت کاربران", err));
+}, []);
 
-  const handleAddGoal = () => {
-    if (!title.trim()) return;
+const handleAddGoal = () => {
+  if (!title.trim()) return;
 
-    const newGoal = { title, status, department, owner, startDate, endDate };
+  const newGoal = { title, status, department, owner, startDate, endDate };
 
-    fetch('/api/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newGoal)
+  fetch(`${baseUrl}/goals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newGoal)
+  })
+    .then(res => res.json())
+    .then(saved => {
+      setGoals([...goals, saved]);
+      resetForm();
     })
-      .then(res => res.json())
-      .then(saved => {
-        setGoals([...goals, saved]);
-        resetForm();
-      })
-      .catch(err => console.error("خطا در افزودن هدف", err));
-  };
+    .catch(err => console.error("خطا در افزودن هدف", err));
+};
+
 
   const handleDeleteGoal = (id) => {
     fetch(`/api/goals/${id}`, { method: 'DELETE' })
