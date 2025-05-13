@@ -16,21 +16,19 @@ export default function OrganizationalGoalsManagement() {
     unit: "",
     definitionOfDone: ""
   });
-
   const [filterBySuccess, setFilterBySuccess] = useState("all");
+  const baseUrl = process.env.REACT_APP_API_URL;
 
-  // Load data from API on mountconst baseUrl = process.env.REACT_APP_API_URL;
-
-useEffect(() => {
-  fetch(`${baseUrl}/goals`)
-    .then(res => res.json())
-    .then(data => setGoals(data))
-    .catch((error) => {
-      console.error('❌ خطا در دریافت اهداف از سرور:', error);
-      setGoals([]);
-    });
-}, []);
-
+  // Load data from API on mount
+  useEffect(() => {
+    fetch(`${baseUrl}/goals`)
+      .then(res => res.json())
+      .then(data => setGoals(data))
+      .catch((error) => {
+        console.error('❌ خطا در دریافت اهداف از سرور:', error);
+        setGoals([]);
+      });
+  }, []);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -45,55 +43,46 @@ useEffect(() => {
   // Calculate success percentage using YTD if available
   const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
     const valueToUse = ytdValue || currentStatus;
-    
     if (!valueToUse || !target || !failure) return 0;
-    
     const valueNum = parseFloat(valueToUse);
     const targetNum = parseFloat(target);
     const failureNum = parseFloat(failure);
-    
     if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
     if (targetNum <= failureNum) return 0;
-    
     if (valueNum >= targetNum) return 100;
     if (valueNum <= failureNum) return 0;
-    
     return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
   };
 
   const handleAddGoal = () => {
     const weightValue = parseFloat(newGoal.weight) || 0;
-
     // Check total weight
     const totalWeight = goals.reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
-
     if (totalWeight + weightValue > 100) {
       alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
       return;
     }
-
-    // ارسال هدف به بک‌اندconst baseUrl = process.env.REACT_APP_API_URL;
-
-fetch(`${baseUrl}/goals`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(newGoal)
-})
-  .then(res => {
-    if (!res.ok) throw new Error('خطا در ذخیره در سرور');
-    return res.json();
-  })
-  .then(savedGoal => {
-    const updatedGoals = [...goals, savedGoal];
-    setGoals(updatedGoals);
-    resetForm();
-  })
-  .catch(err => {
-    console.error('❌ خطا در ذخیره هدف:', err);
-    alert('خطا در ذخیره در سرور');
-  });
-
-
+    
+    // Send goal to backend
+    fetch(`${baseUrl}/goals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGoal)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('خطا در ذخیره در سرور');
+        return res.json();
+      })
+      .then(savedGoal => {
+        const updatedGoals = [...goals, savedGoal];
+        setGoals(updatedGoals);
+        resetForm();
+      })
+      .catch(err => {
+        console.error('❌ خطا در ذخیره هدف:', err);
+        alert('خطا در ذخیره در سرور');
+      });
+  };
 
   // Reset form
   const resetForm = () => {
@@ -113,37 +102,33 @@ fetch(`${baseUrl}/goals`, {
   };
 
   // Delete goal
-const handleDelete = (goalId) => {
-  if (!window.confirm("آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟")) return;
-
-  fetch(`/api/goals/${goalId}`, { method: 'DELETE' })
-    .then(res => res.json())
-    .then(result => {
-      console.log('🗑️ حذف انجام شد:', result);
-      if (result.success) {
-        const updatedGoals = goals.filter(goal => goal.id !== goalId);
-        setGoals(updatedGoals);
-      } else {
-        alert('خطا در حذف هدف');
-      }
-    })
-    .catch(err => {
-      console.error('❌ خطا در حذف هدف:', err);
-      alert('خطا در برقراری ارتباط با سرور');
-    });
-};
-
-
+  const handleDelete = (goalId) => {
+    if (!window.confirm("آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟")) return;
+    fetch(`${baseUrl}/goals/${goalId}`, { method: 'DELETE' })
+      .then(res => res.json())
+      .then(result => {
+        console.log('🗑️ حذف انجام شد:', result);
+        if (result.success) {
+          const updatedGoals = goals.filter(goal => goal.id !== goalId);
+          setGoals(updatedGoals);
+        } else {
+          alert('خطا در حذف هدف');
+        }
+      })
+      .catch(err => {
+        console.error('❌ خطا در حذف هدف:', err);
+        alert('خطا در برقراری ارتباط با سرور');
+      });
+  };
 
   // Edit goal
-  const handleEdit = (index) => {
-    const goalToEdit = goals[index];
-    setNewGoal({ ...goalToEdit });
+  const handleEdit = (goalId) => {
+    const goalToEdit = goals.find(goal => goal.id === goalId);
+    if (!goalToEdit) return;
     
-    const updatedGoals = [...goals];
-    updatedGoals.splice(index, 1);
+    setNewGoal({ ...goalToEdit });
+    const updatedGoals = goals.filter(goal => goal.id !== goalId);
     setGoals(updatedGoals);
-    localStorage.setItem("organizationalGoals", JSON.stringify(updatedGoals));
   };
 
   // Progress bar component
@@ -179,7 +164,6 @@ const handleDelete = (goalId) => {
       goal.target,
       goal.failure
     );
-    
     switch (filterBySuccess) {
       case "low":
         return successPercentage < 40;
@@ -215,7 +199,6 @@ const handleDelete = (goalId) => {
           borderRadius: "10px"
         }}>
           <h2 style={{ marginBottom: "20px" }}>فرم ثبت هدف</h2>
-          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <input 
               name="title"
@@ -228,7 +211,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="target"
               placeholder="تارگت (عدد)"
@@ -240,7 +222,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="failure"
               placeholder="عدم دستیابی (عدد)"
@@ -252,7 +233,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="currentStatus"
               placeholder="وضعیت موجود (عدد)"
@@ -264,7 +244,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="ytd"
               placeholder="YTD (اختیاری)"
@@ -276,7 +255,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <div style={{ display: "flex", gap: "10px" }}>
               <select 
                 name="year"
@@ -292,7 +270,6 @@ const handleDelete = (goalId) => {
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
-
               <select 
                 name="half"
                 value={newGoal.half}
@@ -307,7 +284,6 @@ const handleDelete = (goalId) => {
                 <option value="H2">نیمسال دوم</option>
               </select>
             </div>
-
             <input 
               name="calculationMethod"
               placeholder="نحوه محاسبه"
@@ -319,7 +295,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="unit"
               placeholder="واحد"
@@ -331,7 +306,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="weight"
               placeholder="وزن از کل اهداف (%)"
@@ -343,7 +317,6 @@ const handleDelete = (goalId) => {
                 borderRadius: "5px"
               }}
             />
-
             <textarea 
               name="definitionOfDone"
               placeholder="تعریف از انجام شده"
@@ -356,7 +329,6 @@ const handleDelete = (goalId) => {
                 minHeight: "100px"
               }}
             />
-
             <button 
               onClick={handleAddGoal} 
               style={{ 
@@ -436,7 +408,6 @@ const handleDelete = (goalId) => {
                   goal.target,
                   goal.failure
                 );
-                
                 return (
                   <tr key={index}>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{goal.title}</td>

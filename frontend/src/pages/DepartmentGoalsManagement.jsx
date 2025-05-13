@@ -29,17 +29,19 @@ export default function DepartmentGoalsManagement() {
   // Load data from API
   const baseUrl = process.env.REACT_APP_API_URL;
 
-Promise.all([
-  fetch(`${baseUrl}/departments`).then(res => res.json()),
-  fetch(`${baseUrl}/goals`).then(res => res.json()),
-  fetch(`${baseUrl}/department-goals`).then(res => res.json())
-])
-  .then(([deptData, goalData, dGoalData]) => {
-    // handle data
-  })
-  .catch(err => {
-    console.error('❌ خطا در دریافت اطلاعات:', err);
-  });
+  useEffect(() => {
+    Promise.all([
+      fetch(`${baseUrl}/departments`).then(res => res.json()),
+      fetch(`${baseUrl}/goals`).then(res => res.json()),
+      fetch(`${baseUrl}/department-goals`).then(res => res.json())
+    ])
+      .then(([deptData, goalData, dGoalData]) => {
+        setDepartments(deptData);
+        setOrganizationalGoals(goalData);
+        setDepartmentGoals(dGoalData);
+      })
+      .catch(err => console.error('❌ خطا در دریافت اطلاعات:', err));
+  }, []);
 
   // Handle input changes
   const handleKRChange = (e) => {
@@ -51,6 +53,26 @@ Promise.all([
     const updatedProgress = [...newKeyResult.monthlyProgress];
     updatedProgress[index] = value;
     setNewKeyResult({ ...newKeyResult, monthlyProgress: updatedProgress });
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setNewKeyResult({
+      keyResult: "",
+      weight: "",
+      target: "",
+      failure: "",
+      unit: "",
+      baseline: "",
+      calculationMethod: "",
+      definitionOfDone: "",
+      monthlyProgress: ["", "", "", "", "", ""],
+      ytd: "",
+      finalAchievement: "",
+      status: ""
+    });
+    setSelectedDepartment("");
+    setSelectedOrgGoal("");
   };
 
   // Add/edit key result
@@ -79,95 +101,74 @@ Promise.all([
     };
 
     const url = editingIndex !== null 
-      ? `/api/department-goals/${editingIndex}` 
-      : '/api/department-goals';
-const baseUrl = process.env.REACT_APP_API_URL;
+      ? `${baseUrl}/department-goals/${editingIndex}` 
+      : `${baseUrl}/department-goals`;
 
-fetch(url, {
-  method: editingIndex !== null ? 'PUT' : 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(newEntry)
-})
-  .then(res => {
-    if (!res.ok) throw new Error('API Error');
-    // ✅ اصلاح این خط با baseUrl
-    return fetch(`${baseUrl}/department-goals`).then(res => res.json());
-  })
-  .then(updatedData => {
-    setDepartmentGoals(updatedData);
-    resetForm();
-    setEditingIndex(null);
-  })
-  .catch(err => {
-    console.error(err);
-    alert(`خطا در ${editingIndex !== null ? 'به‌روزرسانی' : 'افزودن'} Key Result`);
-  });
-
-
-  // Reset form
-  const resetForm = () => {
-    setNewKeyResult({
-      keyResult: "",
-      weight: "",
-      target: "",
-      failure: "",
-      unit: "",
-      baseline: "",
-      calculationMethod: "",
-      definitionOfDone: "",
-      monthlyProgress: ["", "", "", "", "", ""],
-      ytd: "",
-      finalAchievement: "",
-      status: ""
+    fetch(url, {
+      method: editingIndex !== null ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEntry)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('API Error');
+      return fetch(`${baseUrl}/department-goals`).then(res => res.json());
+    })
+    .then(updatedData => {
+      setDepartmentGoals(updatedData);
+      resetForm();
+      setEditingIndex(null);
+    })
+    .catch(err => {
+      console.error(err);
+      alert(`خطا در ${editingIndex !== null ? 'به‌روزرسانی' : 'افزودن'} Key Result`);
     });
-    setSelectedDepartment("");
-    setSelectedOrgGoal("");
   };
 
   // Delete key result
- const handleDelete = (id) => {
-  if (!window.confirm("آیا مطمئن هستید که می‌خواهید این مورد را حذف کنید؟")) return;
-
-  fetch(`/api/department-goals/${id}`, { method: 'DELETE' })
-    .then(res => res.json())
-    .then(result => {
-      if (result.success) {
-        const updatedGoals = departmentGoals.filter(goal => goal.id !== id);
-        setDepartmentGoals(updatedGoals);
-      }
-    })
-    .catch(err => {
-      console.error('❌ خطا در حذف هدف دپارتمان:', err);
-      alert('خطا در حذف هدف دپارتمان از سرور');
-    });
-};
+  const handleDelete = (id) => {
+    if (!window.confirm("آیا مطمئن هستید که می‌خواهید این مورد را حذف کنید؟")) return;
+    
+    fetch(`${baseUrl}/department-goals/${id}`, { method: 'DELETE' })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          const updatedGoals = departmentGoals.filter(goal => goal.id !== id);
+          setDepartmentGoals(updatedGoals);
+        }
+      })
+      .catch(err => {
+        console.error('❌ خطا در حذف هدف دپارتمان:', err);
+        alert('خطا در حذف هدف دپارتمان از سرور');
+      });
+  };
 
   // Edit key result
   const handleEdit = (id) => {
-  const krToEdit = departmentGoals.find(goal => goal.id === id);
-  if (!krToEdit) return;
+    const krToEdit = departmentGoals.find(goal => goal.id === id);
+    if (!krToEdit) return;
 
-  setSelectedDepartment(krToEdit.department);
-  setSelectedOrgGoal(krToEdit.orgGoalTitle);
-  setSelectedYear(krToEdit.year);
-  setSelectedHalf(krToEdit.half);
-  setNewKeyResult({
-    keyResult: krToEdit.keyResult,
-    weight: krToEdit.weight,
-    target: krToEdit.target,
-    failure: krToEdit.failure,
-    unit: krToEdit.unit,
-    baseline: krToEdit.baseline,
-    calculationMethod: krToEdit.calculationMethod,
-    definitionOfDone: krToEdit.definitionOfDone,
-    monthlyProgress: krToEdit.monthlyProgress,
-    ytd: krToEdit.ytd || "",
-    finalAchievement: krToEdit.finalAchievement,
-    status: krToEdit.status
-  });
-  setEditingIndex(id);  // اینجا حالا id ذخیره می‌شود، نه index
-};
-
+    setSelectedDepartment(krToEdit.department);
+    setSelectedOrgGoal(krToEdit.orgGoalTitle);
+    setSelectedYear(krToEdit.year);
+    setSelectedHalf(krToEdit.half);
+    
+    setNewKeyResult({
+      keyResult: krToEdit.keyResult,
+      weight: krToEdit.weight,
+      target: krToEdit.target,
+      failure: krToEdit.failure,
+      unit: krToEdit.unit,
+      baseline: krToEdit.baseline,
+      calculationMethod: krToEdit.calculationMethod,
+      definitionOfDone: krToEdit.definitionOfDone,
+      monthlyProgress: krToEdit.monthlyProgress,
+      ytd: krToEdit.ytd || "",
+      finalAchievement: krToEdit.finalAchievement,
+      status: krToEdit.status
+    });
+    
+    setEditingIndex(id);
+  };
 
   // Calculate YTD automatically from last filled month
   const calculateAutoYTD = (monthlyProgress) => {
@@ -178,13 +179,16 @@ fetch(url, {
   const calculateSuccessPercentage = (ytdValue, monthlyProgress, target, failure) => {
     const valueToUse = ytdValue || calculateAutoYTD(monthlyProgress);
     if (!valueToUse || !target || !failure) return 0;
+
     const valueNum = parseFloat(valueToUse);
     const targetNum = parseFloat(target);
     const failureNum = parseFloat(failure);
+
     if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
     if (targetNum <= failureNum) return 0;
     if (valueNum >= targetNum) return 100;
     if (valueNum <= failureNum) return 0;
+
     return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
   };
 
@@ -192,6 +196,7 @@ fetch(url, {
   const ProgressBar = ({ percentage }) => {
     const color = percentage >= 80 ? '#28a745' : 
                   percentage >= 50 ? '#ffc107' : '#dc3545';
+    
     return (
       <div style={{ 
         width: '100%', 
@@ -218,7 +223,7 @@ fetch(url, {
     : departmentGoals;
 
   return (
-       <div style={{ 
+    <div style={{ 
       padding: "20px", 
       direction: "rtl", 
       fontFamily: "Vazirmatn, sans-serif",
@@ -241,7 +246,6 @@ fetch(url, {
           borderRadius: "10px"
         }}>
           <h2 style={{ marginBottom: "20px" }}>فرم ثبت Key Result</h2>
-          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <select 
               value={selectedDepartment}
@@ -257,7 +261,6 @@ fetch(url, {
                 <option key={index} value={d.name}>{d.name}</option>
               ))}
             </select>
-
             <select 
               value={selectedOrgGoal}
               onChange={(e) => setSelectedOrgGoal(e.target.value)}
@@ -272,7 +275,6 @@ fetch(url, {
                 <option key={index} value={g.title}>{g.title}</option>
               ))}
             </select>
-
             <div style={{ display: "flex", gap: "10px" }}>
               <select 
                 value={selectedYear}
@@ -287,7 +289,6 @@ fetch(url, {
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
-
               <select 
                 value={selectedHalf}
                 onChange={(e) => setSelectedHalf(e.target.value)}
@@ -301,7 +302,6 @@ fetch(url, {
                 <option value="H2">نیمسال دوم</option>
               </select>
             </div>
-
             <input 
               name="keyResult"
               placeholder="عنوان Key Result *"
@@ -313,7 +313,6 @@ fetch(url, {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="weight"
               placeholder="وزن (%)"
@@ -325,7 +324,6 @@ fetch(url, {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="target"
               placeholder="تارگت"
@@ -337,7 +335,6 @@ fetch(url, {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="unit"
               placeholder="واحد"
@@ -359,7 +356,6 @@ fetch(url, {
           borderRadius: "10px"
         }}>
           <h2 style={{ marginBottom: "20px" }}>اطلاعات تکمیلی</h2>
-          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <input 
               name="failure"
@@ -372,7 +368,6 @@ fetch(url, {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="baseline"
               placeholder="مبنا"
@@ -384,7 +379,6 @@ fetch(url, {
                 borderRadius: "5px"
               }}
             />
-
             <input 
               name="calculationMethod"
               placeholder="نحوه محاسبه"
@@ -396,7 +390,6 @@ fetch(url, {
                 borderRadius: "5px"
               }}
             />
-
             <textarea 
               name="definitionOfDone"
               placeholder="تعریف از انجام شده"
@@ -409,7 +402,6 @@ fetch(url, {
                 minHeight: "100px"
               }}
             />
-
             <div style={{ marginTop: "10px" }}>
               <div style={{ marginBottom: "10px" }}>پیشرفت ماهانه</div>
               <div style={{ 
@@ -432,7 +424,6 @@ fetch(url, {
                 ))}
               </div>
             </div>
-
             <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
               <button 
                 onClick={handleAddKeyResult} 
@@ -515,7 +506,6 @@ fetch(url, {
                   kr.target, 
                   kr.failure
                 );
-                
                 return (
                   <tr key={index}>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.department}</td>
@@ -570,8 +560,6 @@ fetch(url, {
                       <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
                         <button 
                           onClick={() => handleEdit(kr.id)}
-                          onClick={() => handleDelete(kr.id)}
-
                           style={{ 
                             backgroundColor: "#4CAF50", 
                             color: "white", 
