@@ -16,20 +16,19 @@ export default function UserManagement() {
   const [filterRole, setFilterRole] = useState("همه");
   const [filterDepartment, setFilterDepartment] = useState("همه");
   const [searchQuery, setSearchQuery] = useState("");
-const baseUrl = process.env.REACT_APP_API_URL;
+  const baseUrl = process.env.REACT_APP_API_URL;
 
-useEffect(() => {
-  fetch(`${baseUrl}/users`)
-    .then(res => res.json())
-    .then(setUsers)
-    .catch(err => console.error("خطا در دریافت کاربران", err));
+  useEffect(() => {
+    fetch(`${baseUrl}/users`)
+      .then(res => res.json())
+      .then(setUsers)
+      .catch(err => console.error("خطا در دریافت کاربران", err));
 
-  fetch(`${baseUrl}/departments`)
-    .then(res => res.json())
-    .then(setDepartments)
-    .catch(err => console.error("خطا در دریافت دپارتمان‌ها", err));
-}, []);
-
+    fetch(`${baseUrl}/departments`)
+      .then(res => res.json())
+      .then(setDepartments)
+      .catch(err => console.error("خطا در دریافت دپارتمان‌ها", err));
+  }, []);
 
   const handleChange = (e) => setNewUser({ ...newUser, [e.target.name]: e.target.value });
 
@@ -39,7 +38,7 @@ useEffect(() => {
       return;
     }
 
-    const url = editingUserId ? `/api/users/${editingUserId}` : '/api/users';
+    const url = editingUserId ? `${baseUrl}/users/${editingUserId}` : `${baseUrl}/users`;
     const method = editingUserId ? 'PUT' : 'POST';
 
     fetch(url, {
@@ -67,7 +66,7 @@ useEffect(() => {
   const handleDeleteUser = (id) => {
     if (!window.confirm("آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟")) return;
 
-    fetch(`/api/users/${id}`, { method: 'DELETE' })
+    fetch(`${baseUrl}/users/${id}`, { method: 'DELETE' })
       .then(() => setUsers(users.filter(u => u.id !== id)))
       .catch(err => console.error("خطا در حذف کاربر", err));
   };
@@ -83,12 +82,6 @@ useEffect(() => {
     const matchesDepartment = filterDepartment === "همه" || user.department === filterDepartment;
     return matchesSearch && matchesRole && matchesDepartment;
   });
-
-  const canAccess = (accessPoint) => (role) => {
-    const accessRules = { "Admin": ["all"], "Department Manager": ["view", "edit_department"], "Viewer": ["view"] };
-    const allowedAccess = accessRules[role] || ["view"];
-    return allowedAccess.includes(accessPoint) || allowedAccess.includes("all");
-  };
 
   return (
     <div style={{ padding: "40px", direction: "rtl", fontFamily: "Vazirmatn, sans-serif", backgroundColor: "#f5f5f5", minHeight: "100vh" }}>

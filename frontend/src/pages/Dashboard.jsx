@@ -4,36 +4,36 @@ import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 export default function Dashboard() {
   const [strategyInfo, setStrategyInfo] = useState({ vision: "", mission: "", core_values: "" });
   const [organizationalGoals, setOrganizationalGoals] = useState([]);
   const [departmentGoals, setDepartmentGoals] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
-
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [filterHalf, setFilterHalf] = useState("همه");
   const [filterOrganizationalGoal, setFilterOrganizationalGoal] = useState("");
   const [showExportOptions, setShowExportOptions] = useState(false);
 
-  // Load data from backend
   useEffect(() => {
-    fetch("/api/strategy")
+    fetch(`${API_URL}/strategy`)
       .then(res => res.json())
       .then(data => setStrategyInfo(data || { vision: "", mission: "", core_values: "" }));
 
-    fetch("/api/goals")
+    fetch(`${API_URL}/goals`)
       .then(res => res.json())
       .then(data => {
         setOrganizationalGoals(data || []);
-        setDepartmentGoals(data || []);  // Assuming same API returns both for now
+        setDepartmentGoals(data || []);
       });
 
-    fetch("/api/departments")
+    fetch(`${API_URL}/departments`)
       .then(res => res.json())
       .then(data => setDepartments(data || []));
 
-    fetch("/api/users")
+    fetch(`${API_URL}/users`)
       .then(res => res.json())
       .then(data => setUsers(data || []));
   }, []);
@@ -123,9 +123,7 @@ export default function Dashboard() {
               ) : (
                 relatedDepartments.map(dept => (
                   <div key={dept} style={{ borderBottom: "1px solid #eee" }}>
-                    <div style={{ padding: "15px 20px", backgroundColor: "#fafafa", fontWeight: "bold" }}>
-                      {dept}
-                    </div>
+                    <div style={{ padding: "15px 20px", backgroundColor: "#fafafa", fontWeight: "bold" }}>{dept}</div>
                     <div style={{ padding: "10px 20px", backgroundColor: "#fff" }}>
                       {groupedKR[dept]?.length > 0 ? (
                         <ul style={{ listStyle: "none", paddingLeft: 0 }}>
@@ -153,7 +151,6 @@ export default function Dashboard() {
   );
 }
 
-// Info Card Component
 function InfoCard({ title, content }) {
   return (
     <div style={{ flex: "1", backgroundColor: "#ffffff", padding: "20px", borderRadius: "8px", boxShadow: "0 0 5px rgba(0,0,0,0.1)", minWidth: "200px" }}>
@@ -163,7 +160,6 @@ function InfoCard({ title, content }) {
   );
 }
 
-// Stat Card Component
 function StatCard({ label, value, color }) {
   return (
     <div style={{ flex: "1", backgroundColor: color, color: "white", padding: "20px", borderRadius: "8px", textAlign: "center", minWidth: "150px" }}>
@@ -173,7 +169,6 @@ function StatCard({ label, value, color }) {
   );
 }
 
-// Filter Component
 function Filter({ label, value, onChange, options }) {
   return (
     <div>

@@ -1,24 +1,28 @@
 import { useState, useEffect } from "react";
 
+// تعریف آدرس بک‌اند از .env یا Render
+const API_URL = process.env.REACT_APP_API_URL;
+
 export default function Collaboration() {
   const [notes, setNotes] = useState([]);
   const [noteText, setNoteText] = useState("");
   const [file, setFile] = useState(null);
 
+  // دریافت یادداشت‌ها در بارگذاری اولیه صفحه
   useEffect(() => {
-    // دریافت یادداشت‌ها از بک‌اند
-    fetch("/api/collaboration")
+    fetch(`${API_URL}/collaboration`)
       .then((res) => res.json())
       .then((data) => setNotes(data || []))
       .catch((err) => console.error("خطا در دریافت یادداشت‌ها:", err));
   }, []);
 
+  // افزودن یادداشت جدید
   const handleAddNote = () => {
     if (!noteText.trim() && !file) return;
 
     const newNote = { text: noteText, fileName: file ? file.name : null };
 
-    fetch("/api/collaboration", {
+    fetch(`${API_URL}/collaboration`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newNote),
@@ -32,8 +36,9 @@ export default function Collaboration() {
       .catch((err) => console.error("خطا در ذخیره یادداشت:", err));
   };
 
+  // حذف یادداشت
   const handleDeleteNote = (id) => {
-    fetch(`/api/collaboration/${id}`, { method: "DELETE" })
+    fetch(`${API_URL}/collaboration/${id}`, { method: "DELETE" })
       .then(() => {
         setNotes(notes.filter((note) => note.id !== id));
       })

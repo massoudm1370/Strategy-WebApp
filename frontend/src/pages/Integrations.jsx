@@ -3,34 +3,33 @@ import { useState, useEffect } from "react";
 export default function Integrations() {
   const [apis, setApis] = useState([]);
   const [apiUrl, setApiUrl] = useState("");
-const baseUrl = process.env.REACT_APP_API_URL;
+  const baseUrl = process.env.REACT_APP_API_URL;
 
-useEffect(() => {
-  fetch(`${baseUrl}/integrations`)
-    .then(res => res.json())
-    .then(setApis)
-    .catch(err => console.error("خطا در دریافت یکپارچگی‌ها:", err));
-}, []);
+  useEffect(() => {
+    fetch(`${baseUrl}/integrations`)
+      .then(res => res.json())
+      .then(setApis)
+      .catch(err => console.error("خطا در دریافت یکپارچگی‌ها:", err));
+  }, []);
 
-const handleAddApi = () => {
-  if (!apiUrl.trim()) return;
+  const handleAddApi = () => {
+    if (!apiUrl.trim()) return;
 
-  fetch(`${baseUrl}/integrations`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: apiUrl })
-  })
-    .then(res => res.json())
-    .then(saved => {
-      setApis([...apis, saved]);
-      setApiUrl("");
+    fetch(`${baseUrl}/integrations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: apiUrl })
     })
-    .catch(err => console.error("خطا در ثبت یکپارچگی:", err));
-};
-
+      .then(res => res.json())
+      .then(saved => {
+        setApis([...apis, saved]);
+        setApiUrl("");
+      })
+      .catch(err => console.error("خطا در ثبت یکپارچگی:", err));
+  };
 
   const handleDeleteApi = (id) => {
-    fetch(`/api/integrations/${id}`, { method: 'DELETE' })
+    fetch(`${baseUrl}/integrations/${id}`, { method: 'DELETE' })
       .then(() => {
         setApis(apis.filter(api => api.id !== id));
       })

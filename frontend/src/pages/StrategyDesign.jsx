@@ -5,14 +5,16 @@ export default function StrategyDesign() {
   const [mission, setMission] = useState("");
   const [coreValues, setCoreValues] = useState("");
 
+  const baseUrl = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
-    fetch("/api/strategy")
+    fetch(`${baseUrl}/strategy`)
       .then((res) => res.json())
       .then((data) => {
         if (data) {
           setVision(data.vision || "");
           setMission(data.mission || "");
-          setCoreValues(data.core_values || "");  // اصلاح نام فیلد دریافتی
+          setCoreValues(data.core_values || "");
         }
       })
       .catch((err) => console.error("❌ خطا در دریافت اطلاعات:", err));
@@ -21,7 +23,7 @@ export default function StrategyDesign() {
   const handleSave = () => {
     const strategyData = { vision, mission, core_values: coreValues };
 
-    fetch("/api/strategy", {
+    fetch(`${baseUrl}/strategy`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(strategyData),
