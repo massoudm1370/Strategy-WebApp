@@ -6,6 +6,24 @@ import { saveAs } from "file-saver";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+// ✅ تابع محاسبه درصد موفقیت را اضافه کنید
+const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
+  const valueToUse = ytdValue || currentStatus;
+  if (!valueToUse || !target || !failure) return 0;
+
+  const valueNum = parseFloat(valueToUse);
+  const targetNum = parseFloat(target);
+  const failureNum = parseFloat(failure);
+
+  if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
+
+  if (targetNum <= failureNum) return 0;
+  if (valueNum >= targetNum) return 100;
+  if (valueNum <= failureNum) return 0;
+
+  return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
+};
+
 export default function Dashboard() {
   const [strategyInfo, setStrategyInfo] = useState({ vision: "", mission: "", core_values: "" });
   const [organizationalGoals, setOrganizationalGoals] = useState([]);
@@ -15,9 +33,9 @@ export default function Dashboard() {
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [filterHalf, setFilterHalf] = useState("همه");
   const [filterOrganizationalGoal, setFilterOrganizationalGoal] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState(""); // New filter for departments
+  const [filterDepartment, setFilterDepartment] = useState("");
   const [showExportOptions, setShowExportOptions] = useState(false);
-  const [selectedOrganizationalGoal, setSelectedOrganizationalGoal] = useState(""); // Track selected goal
+  const [selectedOrganizationalGoal, setSelectedOrganizationalGoal] = useState("");
 
   useEffect(() => {
     fetch(`${API_URL}/strategy`)
@@ -44,18 +62,40 @@ export default function Dashboard() {
   const filteredOrganizationalGoals = organizationalGoals.filter(g => 
     (!filterYear || g.year === filterYear) && 
     (filterHalf === "همه" || g.halfYear === filterHalf) &&
-    (filterDepartment === "همه" || g.department === filterDepartment) // Apply department filter
+    (filterDepartment === "همه" || g.department === filterDepartment)
   );
   
   const relatedDepartments = [...new Set(departmentGoals.filter(kr => kr.title === selectedOrganizationalGoal).map(kr => kr.department))];
   const relatedKeyResults = departmentGoals.filter(kr => kr.title === selectedOrganizationalGoal);
 
   const exportToExcel = () => {
-    // ... (same as before)
+    const summary = [
+      { "چشم‌انداز": strategyInfo.vision },
+      { "ماموریت": strategyInfo.mission },
+      { "ارزش‌ها": strategyInfo.core_values },
+      { "دپارتمان‌ها": departments.length },
+      { "کاربران": users.length },
+      { "اهداف سازمانی": filteredOrganizationalGoals.length }
+    ];
+    const worksheet = XLSX.utils.json_to_sheet([...summary, ...relatedKeyResults]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "داشبورد");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), "داشبورد_استراتژیک.xlsx");
+    setShowExportOptions(false);
   };
 
   const exportToPDF = () => {
-    // ... (same as before)
+    const input = document.getElementById("dashboard-content");
+    html2canvas(input).then(canvas => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("داشبورد_استراتژیک.pdf");
+      setShowExportOptions(false);
+    });
   };
 
   const groupedKR = relatedKeyResults.reduce((acc, kr) => {
@@ -64,7 +104,7 @@ export default function Dashboard() {
     return acc;
   }, {});
 
-  // Calculate success percentage for each department
+  // ✅ محاسبه وضعیت دپارتمان‌ها براساس درصد موفقیت
   const departmentSuccess = departmentGoals.reduce((acc, kr) => {
     if (!acc[kr.department]) acc[kr.department] = { total: 0, low: 0, medium: 0, high: 0 };
     const success = calculateSuccessPercentage(kr.ytd, kr.currentStatus, kr.target, kr.failure);
@@ -77,7 +117,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: "40px", direction: "rtl", fontFamily: "Vazirmatn, sans-serif", backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
-      {/* Export buttons */}
+      <h1>داشبورد استراتژیک</h1>
       <div style={{ position: "relative", display: "inline-block", marginBottom: "20px" }}>
         <button onClick={() => setShowExportOptions(!showExportOptions)} style={{ padding: "10px 20px", backgroundColor: "#223F98", color: "white", border: "none", borderRadius: "5px" }}>
           دریافت گزارش
@@ -91,34 +131,30 @@ export default function Dashboard() {
       </div>
 
       <div id="dashboard-content">
-        {/* Info Cards */}
         <div style={{ display: "flex", gap: "20px", marginBottom: "30px", flexWrap: "wrap" }}>
           <InfoCard title="چشم‌انداز" content={strategyInfo.vision} />
           <InfoCard title="ماموریت" content={strategyInfo.mission} />
           <InfoCard title="ارزش‌ها" content={strategyInfo.core_values} />
         </div>
 
-        {/* Filters */}
         <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <Filter label="سال" value={filterYear} onChange={setFilterYear} options={availableYears} />
           <Filter label="نیمسال" value={filterHalf} onChange={setFilterHalf} options={["همه", "H1", "H2"]} />
           <Filter label="هدف سازمانی" value={filterOrganizationalGoal} onChange={(val) => {
             setFilterOrganizationalGoal(val);
-            setSelectedOrganizationalGoal(val); // Update selected goal when filter changes
+            setSelectedOrganizationalGoal(val);
           }} options={organizationalGoals.map(g => g.title)} />
-          <Filter label="دپارتمان" value={filterDepartment} onChange={setFilterDepartment} options={["همه", ...departments.map(d => d.name)]} /> {/* New filter */}
+          <Filter label="دپارتمان" value={filterDepartment} onChange={setFilterDepartment} options={["همه", ...departments.map(d => d.name)]} />
         </div>
 
-        {/* Stats Section */}
         <div style={{ display: "flex", gap: "20px", marginBottom: "30px", flexWrap: "wrap" }}>
           <StatCard label="اهداف سازمانی" value={filteredOrganizationalGoals.length} color="#223F98" />
           <StatCard label="نتایج کلیدی" value={departmentGoals.length} color="#223F98" />
           <StatCard label="دپارتمان‌ها" value={departments.length} color="#223F98" />
           <StatCard label="کاربران" value={users.length} color="#223F98" />
-          <StatCard label="تعداد اهداف دپارتمانی" value={departmentGoals.length} color="#223F98" /> {/* New card */}
+          <StatCard label="تعداد اهداف دپارتمانی" value={departmentGoals.length} color="#223F98" />
         </div>
 
-        {/* Organizational Goal Details */}
         {selectedOrganizationalGoal && (
           <div style={{ marginBottom: "30px" }}>
             <h2>لیست دپارتمان‌ها و نتایج کلیدی برای هدف "{selectedOrganizationalGoal}"</h2>
@@ -138,7 +174,6 @@ export default function Dashboard() {
                               <span>وزن: {kr.weight || "نامشخص"}%</span> |
                               <span>تارگت: {kr.target || "نامشخص"}</span> |
                               <span>عدم دستیابی: {kr.failure || "نامشخص"}</span>
-                              {/* Accordion for details */}
                               <details style={{ marginTop: "10px" }}>
                                 <summary>جزئیات</summary>
                                 <div style={{ padding: "10px", border: "1px dashed #ccc" }}>
@@ -161,7 +196,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Department Status Section */}
         <div style={{ marginTop: "40px", padding: "20px", backgroundColor: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
           <h2>وضعیت دپارتمان‌ها براساس درصد موفقیت</h2>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
