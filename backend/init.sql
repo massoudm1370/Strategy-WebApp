@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS departments (
   name TEXT UNIQUE
 );
 
--- ✅ نسخه به‌روز شده جدول goals
 CREATE TABLE IF NOT EXISTS goals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT,
@@ -56,9 +55,17 @@ CREATE TABLE IF NOT EXISTS strategy (
   core_values TEXT
 );
 
+-- ✅ نسخه به‌روز شده kpis با ستون‌های unit و formula
 CREATE TABLE IF NOT EXISTS kpis (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT,
-  value INTEGER,
-  target INTEGER
+  unit TEXT,
+  target INTEGER,
+  formula TEXT
+);
+
+-- ✅ اضافه شدن جدول integrations
+CREATE TABLE IF NOT EXISTS integrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  url TEXT NOT NULL
 );

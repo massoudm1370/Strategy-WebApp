@@ -2,119 +2,98 @@ const db = require('../db');
 
 const GoalModel = {
   // دریافت همه اهداف
-getAll: (callback) => {
-  try {
-    const stmt = db.prepare("SELECT * FROM goals");
-    const rows = stmt.all();
-    callback(null, rows);
-  } catch (err) {
-    callback(err);
-  }
-},
-
+  getAll: (callback) => {
+    try {
+      const stmt = db.prepare("SELECT * FROM goals");
+      const rows = stmt.all();
+      callback(null, rows);
+    } catch (err) {
+      callback(err);
+    }
+  },
 
   // افزودن هدف جدید
   add: (goal, callback) => {
-    const {
-      title,
-      target,
-      failure,
-      currentStatus,
-      ytd,
-      year,
-      half,
-      calculationMethod,
-      weight,
-      unit,
-      definitionOfDone
-    } = goal;
+    try {
+      const stmt = db.prepare(`
+        INSERT INTO goals (
+          title, target, failure, currentStatus, ytd, year, half,
+          calculationMethod, weight, unit, definitionOfDone
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
 
-    db.run(
-      `INSERT INTO goals (
-        title, target, failure, currentStatus, ytd, year, half,
-        calculationMethod, weight, unit, definitionOfDone
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        title,
-        target,
-        failure,
-        currentStatus,
-        ytd,
-        year,
-        half,
-        calculationMethod,
-        weight,
-        unit,
-        definitionOfDone
-      ],
-      function (err) {
-        if (err) callback(err);
-        else callback(null, { id: this.lastID, ...goal });
-      }
-    );
+      const info = stmt.run(
+        goal.title,
+        goal.target,
+        goal.failure,
+        goal.currentStatus,
+        goal.ytd,
+        goal.year,
+        goal.half,
+        goal.calculationMethod,
+        goal.weight,
+        goal.unit,
+        goal.definitionOfDone
+      );
+
+      callback(null, { id: info.lastInsertRowid, ...goal });
+    } catch (err) {
+      callback(err);
+    }
   },
 
-  // ✅ ویرایش هدف
+  // ویرایش هدف
   update: (id, goal, callback) => {
-    const {
-      title,
-      target,
-      failure,
-      currentStatus,
-      ytd,
-      year,
-      half,
-      calculationMethod,
-      weight,
-      unit,
-      definitionOfDone
-    } = goal;
+    try {
+      console.log('🔄 Updating goal with ID:', id);
+      const stmt = db.prepare(`
+        UPDATE goals SET 
+          title = ?, 
+          target = ?, 
+          failure = ?, 
+          currentStatus = ?, 
+          ytd = ?, 
+          year = ?, 
+          half = ?, 
+          calculationMethod = ?, 
+          weight = ?, 
+          unit = ?, 
+          definitionOfDone = ?
+        WHERE id = ?
+      `);
 
-    console.log('🔄 Updating goal with ID:', id);
-
-    db.run(
-      `UPDATE goals SET 
-        title = ?, 
-        target = ?, 
-        failure = ?, 
-        currentStatus = ?, 
-        ytd = ?, 
-        year = ?, 
-        half = ?, 
-        calculationMethod = ?, 
-        weight = ?, 
-        unit = ?, 
-        definitionOfDone = ?
-       WHERE id = ?`,
-      [
-        title,
-        target,
-        failure,
-        currentStatus,
-        ytd,
-        year,
-        half,
-        calculationMethod,
-        weight,
-        unit,
-        definitionOfDone,
+      const info = stmt.run(
+        goal.title,
+        goal.target,
+        goal.failure,
+        goal.currentStatus,
+        goal.ytd,
+        goal.year,
+        goal.half,
+        goal.calculationMethod,
+        goal.weight,
+        goal.unit,
+        goal.definitionOfDone,
         id
-      ],
-      function (err) {
-        if (err) callback(err);
-        else callback(null, { success: this.changes > 0, id });
-      }
-    );
+      );
+
+      callback(null, { success: info.changes > 0, id });
+    } catch (err) {
+      callback(err);
+    }
   },
 
   // حذف هدف
-delete: (id, callback) => {
-  db.run("DELETE FROM goals WHERE id = ?", [id], function (err) {
-    console.log('🔄 تعداد رکوردهای حذف‌شده:', this.changes);  // ✅ لاگ اضافه شده
-    callback(err, { success: this.changes > 0 });
-  });
-}
-
+  delete: (id, callback) => {
+    try {
+      const stmt = db.prepare("DELETE FROM goals WHERE id = ?");
+      const info = stmt.run(id);
+      console.log('🔄 تعداد رکوردهای حذف‌شده:', info.changes);
+      callback(null, { success: info.changes > 0 });
+    } catch (err) {
+      callback(err);
+    }
+  }
 };
 
 module.exports = GoalModel;
