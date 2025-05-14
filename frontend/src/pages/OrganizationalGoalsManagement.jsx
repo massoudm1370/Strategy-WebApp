@@ -19,8 +19,18 @@ export default function OrganizationalGoalsManagement() {
   const [filterBySuccess, setFilterBySuccess] = useState("all");
   const baseUrl = process.env.REACT_APP_API_URL;
 
+  // States for editing
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState(null);
+
+  // States for KPI repository
+  const [kpiList, setKpiList] = useState([]);
+  const [selectedKpi, setSelectedKpi] = useState(null);
+  const [loadingKpi, setLoadingKpi] = useState(false);
+
   // Load data from API on mount
   useEffect(() => {
+    // Load organizational goals
     fetch(`${baseUrl}/goals`)
       .then(res => res.json())
       .then(data => setGoals(data))
@@ -28,6 +38,21 @@ export default function OrganizationalGoalsManagement() {
         console.error('❌ خطا در دریافت اهداف از سرور:', error);
         setGoals([]);
       });
+
+    // Load KPI repository
+    const fetchKpiList = async () => {
+      setLoadingKpi(true);
+      try {
+        const response = await fetch(`${baseUrl}/kpis`); // فرض می‌کنیم endpoint KPI در /kpis قرار دارد
+        const data = await response.json();
+        setKpiList(data);
+      } catch (error) {
+        console.error('خطا در دریافت لیست KPI:', error);
+      } finally {
+        setLoadingKpi(false);
+      }
+    };
+    fetchKpiList();
   }, []);
 
   // Handle input changes
@@ -44,44 +69,92 @@ export default function OrganizationalGoalsManagement() {
   const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
     const valueToUse = ytdValue || currentStatus;
     if (!valueToUse || !target || !failure) return 0;
+
     const valueNum = parseFloat(valueToUse);
     const targetNum = parseFloat(target);
     const failureNum = parseFloat(failure);
+
     if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
-    if (targetNum <= failureNum) return 0;
-    if (valueNum >= targetNum) return 100;
-    if (valueNum <= failureNum) return 0;
-    return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
+
+    // Handle both cases: target > failure or target < failure
+    const range = Math.max(Math.abs(targetNum - failureNum), 0);
+    if (range === 0) return 0;
+
+    let progress = 0;
+    if (targetNum > failureNum) {
+      // Standard case: target > failure
+      if (valueNum <= failureNum) return 0;
+      if (valueNum >= targetNum) return 100;
+      progress = valueNum - failureNum;
+    } else {
+      // Inverted case: target < failure (for improvement goals)
+      if (valueNum >= failureNum) return 0;
+      if (valueNum <= targetNum) return 100;
+      progress = failureNum - valueNum;
+    }
+
+    const percentage = (progress / range) * 100;
+    return Math.max(0, Math.min(percentage, 100));
   };
 
-  const handleAddGoal = () => {
+  // Handle add/edit goal
+  const handleSaveGoal = () => {
     const weightValue = parseFloat(newGoal.weight) || 0;
-    // Check total weight
     const totalWeight = goals.reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
-    if (totalWeight + weightValue > 100) {
-      alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
-      return;
+
+    if (isEditing) {
+      // Update existing goal
+      if (totalWeight - (goals.find(g => g.id === editingGoalId)?.weight || 0) + weightValue > 100) {
+        alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
+        return;
+      }
+
+      fetch(`${baseUrl}/goals/${editingGoalId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newGoal)
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('خطا در ذخیره در سرور');
+          return res.json();
+        })
+        .then(updatedGoal => {
+          const updatedGoals = goals.map(goal => 
+            goal.id === editingGoalId ? updatedGoal : goal
+          );
+          setGoals(updatedGoals);
+          resetForm();
+        })
+        .catch(err => {
+          console.error('❌ خطا در به‌روزرسانی هدف:', err);
+          alert('خطا در ذخیره در سرور');
+        });
+    } else {
+      // Add new goal
+      if (totalWeight + weightValue > 100) {
+        alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
+        return;
+      }
+
+      fetch(`${baseUrl}/goals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newGoal)
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('خطا در ذخیره در سرور');
+          return res.json();
+        })
+        .then(savedGoal => {
+          const updatedGoals = [...goals, savedGoal];
+          setGoals(updatedGoals);
+          resetForm();
+        })
+        .catch(err => {
+          console.error('❌ خطا در ذخیره هدف:', err);
+          alert('خطا در ذخیره در سرور');
+        });
     }
-    
-    // Send goal to backend
-    fetch(`${baseUrl}/goals`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newGoal)
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('خطا در ذخیره در سرور');
-        return res.json();
-      })
-      .then(savedGoal => {
-        const updatedGoals = [...goals, savedGoal];
-        setGoals(updatedGoals);
-        resetForm();
-      })
-      .catch(err => {
-        console.error('❌ خطا در ذخیره هدف:', err);
-        alert('خطا در ذخیره در سرور');
-      });
   };
 
   // Reset form
@@ -99,6 +172,9 @@ export default function OrganizationalGoalsManagement() {
       unit: "",
       definitionOfDone: ""
     });
+    setIsEditing(false);
+    setEditingGoalId(null);
+    setSelectedKpi(null);
   };
 
   // Delete goal
@@ -125,17 +201,33 @@ export default function OrganizationalGoalsManagement() {
   const handleEdit = (goalId) => {
     const goalToEdit = goals.find(goal => goal.id === goalId);
     if (!goalToEdit) return;
-    
     setNewGoal({ ...goalToEdit });
-    const updatedGoals = goals.filter(goal => goal.id !== goalId);
-    setGoals(updatedGoals);
+    setIsEditing(true);
+    setEditingGoalId(goalId);
   };
+
+  // Handle KPI selection
+  useEffect(() => {
+    if (selectedKpi && kpiList.length > 0) {
+      const selectedKpiData = kpiList.find(kpi => kpi.id === selectedKpi);
+      if (selectedKpiData) {
+        setNewGoal(prev => ({
+          ...prev,
+          title: selectedKpiData.title,
+          target: selectedKpiData.target,
+          failure: selectedKpiData.failure,
+          unit: selectedKpiData.unit,
+          calculationMethod: selectedKpiData.calculationMethod || "",
+          definitionOfDone: selectedKpiData.definitionOfDone || ""
+        }));
+      }
+    }
+  }, [selectedKpi, kpiList]);
 
   // Progress bar component
   const ProgressBar = ({ percentage }) => {
     const color = percentage >= 80 ? '#28a745' : 
                   percentage >= 50 ? '#ffc107' : '#dc3545';
-    
     return (
       <div style={{ 
         width: '100%', 
@@ -185,7 +277,7 @@ export default function OrganizationalGoalsManagement() {
       margin: "0 auto"
     }}>
       <h1 style={{ textAlign: "center", marginBottom: "30px" }}>مدیریت اهداف سازمان</h1>
-
+      
       {/* Form Section */}
       <div style={{ 
         display: "grid", 
@@ -199,6 +291,29 @@ export default function OrganizationalGoalsManagement() {
           borderRadius: "10px"
         }}>
           <h2 style={{ marginBottom: "20px" }}>فرم ثبت هدف</h2>
+          
+          {/* KPI Selection */}
+          <div style={{ marginBottom: "15px" }}>
+            <label>انتخاب هدف از مخزن:</label>
+            <select
+              value={selectedKpi}
+              onChange={(e) => setSelectedKpi(e.target.value)}
+              disabled={loadingKpi}
+              style={{ 
+                width: "100%",
+                padding: "10px", 
+                border: "1px solid #ccc", 
+                borderRadius: "5px",
+                marginTop: "5px"
+              }}
+            >
+              <option value="">-- انتخاب کنید --</option>
+              {kpiList.map(kpi => (
+                <option key={kpi.id} value={kpi.id}>{kpi.title}</option>
+              ))}
+            </select>
+          </div>
+          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <input 
               name="title"
@@ -330,7 +445,7 @@ export default function OrganizationalGoalsManagement() {
               }}
             />
             <button 
-              onClick={handleAddGoal} 
+              onClick={handleSaveGoal} 
               style={{ 
                 backgroundColor: "#223F98", 
                 color: "white", 
@@ -340,12 +455,12 @@ export default function OrganizationalGoalsManagement() {
                 fontSize: "16px"
               }}
             >
-              ذخیره هدف
+              {isEditing ? "به‌روزرسانی هدف" : "ذخیره هدف"}
             </button>
           </div>
         </div>
       </div>
-
+      
       {/* Filter Section */}
       <div style={{ marginBottom: "20px", textAlign: "right" }}>
         <label htmlFor="successFilter" style={{ marginLeft: "10px" }}>فیلتر بر اساس وضعیت:</label>
@@ -366,7 +481,7 @@ export default function OrganizationalGoalsManagement() {
           <option value="high">بالا (بیش از 80%)</option>
         </select>
       </div>
-
+      
       {/* Results Table */}
       <h2 style={{ marginTop: "40px", marginBottom: "20px" }}>لیست اهداف سازمان</h2>
       <div style={{ overflowX: "auto" }}>
