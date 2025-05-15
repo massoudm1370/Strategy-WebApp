@@ -144,9 +144,10 @@ export default function DepartmentGoalsManagement() {
     }
 
     // ✅ تعیین عنوان هدف بر اساس نوع انتخابی
-    const selectedOrgGoalTitle = goalType === "org" 
-    ? organizationalGoals.find(g => g.title === selectedOrgGoal)?.title || selectedOrgGoal
-    : goalRepoList.find(g => g.id === selectedRepoGoal)?.name || "";
+const selectedOrgGoalTitle = goalType === "org" 
+  ? organizationalGoals.find(g => g.title === selectedOrgGoal)?.title || selectedOrgGoal
+  : selectedRepoGoal;  // ذخیره شناسه KPI نه نام
+
 
 
     const newEntry = {
@@ -628,12 +629,12 @@ export default function DepartmentGoalsManagement() {
                 return (
                   <tr key={index}>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.department}</td>
-              {/* ✅ تغییر یافته برای نمایش درست عنوان هدف */}
-              <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                {kr.goalType === "repo"
-                  ? goalRepoList.find(g => g.name === kr.orgGoalTitle)?.name || kr.orgGoalTitle
-                  : kr.orgGoalTitle}
-              </td>
+                    <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                      {kr.goalType === "repo"
+                      ? goalRepoList.find(g => g.id === kr.orgGoalTitle)?.name || kr.orgGoalTitle
+                      : kr.orgGoalTitle}
+                    </td>
+
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.keyResult}</td>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.weight}</td>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.target}</td>
