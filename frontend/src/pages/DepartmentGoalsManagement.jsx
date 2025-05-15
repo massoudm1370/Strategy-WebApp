@@ -628,10 +628,12 @@ export default function DepartmentGoalsManagement() {
                 return (
                   <tr key={index}>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.department}</td>
-                    {/* ✅ نمایش عنوان هدف بر اساس نوع انتخابی */}
-                    <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                      {kr.orgGoalTitle}
-                    </td>
+              {/* ✅ تغییر یافته برای نمایش درست عنوان هدف */}
+              <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                {kr.goalType === "repo"
+                  ? goalRepoList.find(g => g.name === kr.orgGoalTitle)?.name || kr.orgGoalTitle
+                  : kr.orgGoalTitle}
+              </td>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.keyResult}</td>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.weight}</td>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.target}</td>
