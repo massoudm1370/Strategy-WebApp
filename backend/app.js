@@ -32,12 +32,15 @@ const departmentsRoutes = require('./routes/departments');
 const strategyRoutes = require('./routes/strategy');
 const departmentGoalsRoutes = require('./routes/departmentGoals');
 const integrationsRoutes = require('./routes/integrations');
+const kpisRoutes = require('./routes/kpis'); // ✅ اضافه شده
+
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/department-goals', departmentGoalsRoutes);
 app.use('/api/goals', goalsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/departments', departmentsRoutes);
 app.use('/api/strategy', strategyRoutes);
+app.use('/api/kpis', kpisRoutes); // ✅ اضافه شده
 
 // Start Server
 app.listen(PORT, () => {

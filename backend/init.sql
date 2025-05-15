@@ -1,3 +1,4 @@
+-- جدول اهداف دپارتمانی
 CREATE TABLE IF NOT EXISTS department_goals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   department TEXT,
@@ -18,6 +19,7 @@ CREATE TABLE IF NOT EXISTS department_goals (
   status TEXT
 );
 
+-- جدول کاربران
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT,
@@ -28,11 +30,13 @@ CREATE TABLE IF NOT EXISTS users (
   department TEXT
 );
 
+-- جدول دپارتمان‌ها
 CREATE TABLE IF NOT EXISTS departments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE
 );
 
+-- جدول اهداف سازمانی
 CREATE TABLE IF NOT EXISTS goals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT,
@@ -48,6 +52,7 @@ CREATE TABLE IF NOT EXISTS goals (
   definitionOfDone TEXT
 );
 
+-- جدول استراتژی (Vision, Mission, Values)
 CREATE TABLE IF NOT EXISTS strategy (
   id INTEGER PRIMARY KEY,
   vision TEXT,
@@ -55,16 +60,16 @@ CREATE TABLE IF NOT EXISTS strategy (
   core_values TEXT
 );
 
--- ✅ نسخه به‌روز شده kpis با ستون‌های unit و formula
+-- جدول KPIها
 CREATE TABLE IF NOT EXISTS kpis (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
+  name TEXT NOT NULL,
   unit TEXT,
   target INTEGER,
   formula TEXT
 );
 
--- ✅ اضافه شدن جدول integrations
+-- جدول Integrations
 CREATE TABLE IF NOT EXISTS integrations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   url TEXT NOT NULL
