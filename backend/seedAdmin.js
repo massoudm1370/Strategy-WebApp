@@ -1,7 +1,6 @@
 const Database = require('better-sqlite3');
 const db = new Database('./strategy.db');
 
-
 const adminUser = {
   name: "مدیر سیستم",
   email: "massoud.ati@gmail.com",
@@ -11,13 +10,22 @@ const adminUser = {
   department: "مدیریت"
 };
 
-db.run(`
-  INSERT INTO users (name, email, username, password, role, department)
-  VALUES (?, ?, ?, ?, ?, ?)
-`, [adminUser.name, adminUser.email, adminUser.username, adminUser.password, adminUser.role, adminUser.department], function(err) {
-  if (err) {
-    return console.error("❌ خطا در افزودن ادمین:", err.message);
+try {
+  const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(adminUser.username);
+
+  if (existing) {
+    console.log("⚠️ کاربر ادمین قبلاً وجود دارد:", existing);
+  } else {
+    const stmt = db.prepare(`
+      INSERT INTO users (name, email, username, password, role, department)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(adminUser.name, adminUser.email, adminUser.username, adminUser.password, adminUser.role, adminUser.department);
+    console.log("✅ کاربر ادمین با موفقیت ایجاد شد.");
   }
-  console.log("✅ کاربر ادمین با موفقیت ایجاد شد.");
+
+} catch (err) {
+  console.error("❌ خطا در افزودن ادمین:", err.message);
+} finally {
   db.close();
-});
+}
