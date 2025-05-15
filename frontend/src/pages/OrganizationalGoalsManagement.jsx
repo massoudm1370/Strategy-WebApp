@@ -294,25 +294,26 @@ export default function OrganizationalGoalsManagement() {
           
           {/* KPI Selection */}
           <div style={{ marginBottom: "15px" }}>
-            <label>انتخاب هدف از مخزن:</label>
-            <select
-              value={selectedKpi}
-              onChange={(e) => setSelectedKpi(e.target.value)}
-              disabled={loadingKpi}
-              style={{ 
-                width: "100%",
-                padding: "10px", 
-                border: "1px solid #ccc", 
-                borderRadius: "5px",
-                marginTop: "5px"
-              }}
-            >
-              <option value="">-- انتخاب کنید --</option>
-              {kpiList.map(kpi => (
-                <option key={kpi.id} value={kpi.id}>{kpi.title}</option>
-              ))}
-            </select>
-          </div>
+          <label>انتخاب هدف از مخزن:</label>
+          <select
+          value={selectedKpi}
+          onChange={(e) => setSelectedKpi(e.target.value)}
+          disabled={loadingKpi}
+          style={{
+          width: "100%",
+          padding: "10px",
+          border: "1px solid #ccc",
+          borderRadius: "5px",
+          marginTop: "5px"
+          }}
+          >
+          <option value="">-- انتخاب کنید --</option>
+          {kpiList.map(kpi => (
+         <option key={kpi.id} value={kpi.id}>{kpi.name}</option>
+         ))}
+        </select>
+        </div>
+
           
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <input 
