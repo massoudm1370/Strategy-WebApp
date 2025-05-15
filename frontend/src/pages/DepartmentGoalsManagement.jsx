@@ -28,11 +28,9 @@ export default function DepartmentGoalsManagement() {
   const [selectedFilterDepartment, setSelectedFilterDepartment] = useState("");
   const [editingIndex, setEditingIndex] = useState(null); // Track editing state
   const [goalType, setGoalType] = useState("org"); // ✅ نوع هدف: "org" یا "repo"
-  
   // ✅ States for goal repository
   const [goalRepoList, setGoalRepoList] = useState([]);
   const [loadingRepo, setLoadingRepo] = useState(false);
-  
   const baseUrl = process.env.REACT_APP_API_URL;
 
   // Load data from API
@@ -49,7 +47,7 @@ export default function DepartmentGoalsManagement() {
         setDepartmentGoals(dGoalData);
       })
       .catch(err => console.error('❌ خطا در دریافت اطلاعات:', err));
-      
+
     // ✅ Load goal repository
     const fetchGoalRepoList = async () => {
       setLoadingRepo(true);
@@ -134,22 +132,22 @@ export default function DepartmentGoalsManagement() {
       alert("لطفاً تمام فیلدهای الزامی را پر کنید");
       return;
     }
-    
+
     const weightValue = parseFloat(newKeyResult.weight) || 0;
     const totalWeight = departmentGoals
       .filter(goal => goal.department === selectedDepartment)
       .reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
-      
+
     if (totalWeight + weightValue > 100) {
       alert(`مجموع وزن‌ها برای دپارتمان "${selectedDepartment}" نمی‌تواند بیشتر از 100% شود.`);
       return;
     }
-    
+
     // ✅ تعیین عنوان هدف بر اساس نوع انتخابی
     const selectedOrgGoalTitle = goalType === "org" 
       ? organizationalGoals.find(g => g.title === selectedOrgGoal)?.title || selectedOrgGoal
       : goalRepoList.find(g => g.id === selectedRepoGoal)?.title || "";
-    
+
     const newEntry = {
       department: selectedDepartment,
       orgGoalTitle: selectedOrgGoalTitle,
@@ -158,11 +156,11 @@ export default function DepartmentGoalsManagement() {
       goalType, // ✅ ذخیره نوع هدف
       ...newKeyResult
     };
-    
+
     const url = editingIndex !== null 
       ? `${baseUrl}/department-goals/${editingIndex}` 
       : `${baseUrl}/department-goals`;
-      
+
     fetch(url, {
       method: editingIndex !== null ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -186,7 +184,6 @@ export default function DepartmentGoalsManagement() {
   // Delete key result
   const handleDelete = (id) => {
     if (!window.confirm("آیا مطمئن هستید که می‌خواهید این مورد را حذف کنید؟")) return;
-    
     fetch(`${baseUrl}/department-goals/${id}`, { method: 'DELETE' })
       .then(res => res.json())
       .then(result => {
@@ -205,12 +202,12 @@ export default function DepartmentGoalsManagement() {
   const handleEdit = (id) => {
     const krToEdit = departmentGoals.find(goal => goal.id === id);
     if (!krToEdit) return;
-    
+
     setSelectedDepartment(krToEdit.department);
     setSelectedYear(krToEdit.year);
     setSelectedHalf(krToEdit.half);
     setGoalType(krToEdit.goalType || "org"); // ✅ تنظیم نوع هدف
-    
+
     // ✅ تنظیم انتخاب مربوط به نوع هدف
     if (krToEdit.goalType === "org") {
       setSelectedOrgGoal(krToEdit.orgGoalTitle);
@@ -219,7 +216,7 @@ export default function DepartmentGoalsManagement() {
       setSelectedRepoGoal(krToEdit.orgGoalTitle); // ✅ فرض بر این است که orgGoalTitle برای مخزن استفاده می‌شود
       setSelectedOrgGoal("");
     }
-    
+
     setNewKeyResult({
       keyResult: krToEdit.keyResult,
       weight: krToEdit.weight,
@@ -234,7 +231,7 @@ export default function DepartmentGoalsManagement() {
       finalAchievement: krToEdit.finalAchievement,
       status: krToEdit.status
     });
-    
+
     setEditingIndex(id);
   };
 
@@ -247,17 +244,16 @@ export default function DepartmentGoalsManagement() {
   const calculateSuccessPercentage = (ytdValue, monthlyProgress, target, failure) => {
     const valueToUse = ytdValue || calculateAutoYTD(monthlyProgress);
     if (!valueToUse || !target || !failure) return 0;
-    
+
     const valueNum = parseFloat(valueToUse);
     const targetNum = parseFloat(target);
     const failureNum = parseFloat(failure);
-    
+
     if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
-    
     if (targetNum <= failureNum) return 0;
     if (valueNum >= targetNum) return 100;
     if (valueNum <= failureNum) return 0;
-    
+
     return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
   };
 
@@ -265,7 +261,7 @@ export default function DepartmentGoalsManagement() {
   const ProgressBar = ({ percentage }) => {
     const color = percentage >= 80 ? '#28a745' : 
                   percentage >= 50 ? '#ffc107' : '#dc3545';
-    
+
     return (
       <div style={{ 
         width: '100%', 
@@ -300,7 +296,7 @@ export default function DepartmentGoalsManagement() {
       margin: "0 auto"
     }}>
       <h1 style={{ textAlign: "center", marginBottom: "30px" }}>مدیریت اهداف دپارتمان‌ها</h1>
-      
+
       {/* Form Section */}
       <div style={{ 
         display: "grid", 
@@ -315,7 +311,6 @@ export default function DepartmentGoalsManagement() {
           borderRadius: "10px"
         }}>
           <h2 style={{ marginBottom: "20px" }}>فرم ثبت Key Result</h2>
-          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <select 
               value={selectedDepartment}
@@ -331,7 +326,7 @@ export default function DepartmentGoalsManagement() {
                 <option key={index} value={d.name}>{d.name}</option>
               ))}
             </select>
-            
+
             {/* ✅ قسمت انتخاب نوع هدف */}
             <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
               <label>
@@ -351,7 +346,7 @@ export default function DepartmentGoalsManagement() {
                 از مخزن اهداف
               </label>
             </div>
-            
+
             {/* ✅ انتخاب هدف سازمان یا مخزن بسته به نوع انتخاب */}
             {goalType === "org" ? (
               <select 
@@ -385,7 +380,7 @@ export default function DepartmentGoalsManagement() {
                 ))}
               </select>
             )}
-            
+
             <div style={{ display: "flex", gap: "10px" }}>
               <select 
                 value={selectedYear}
@@ -413,7 +408,7 @@ export default function DepartmentGoalsManagement() {
                 <option value="H2">نیمسال دوم</option>
               </select>
             </div>
-            
+
             <input 
               name="keyResult"
               placeholder="عنوان Key Result *"
@@ -425,7 +420,7 @@ export default function DepartmentGoalsManagement() {
                 borderRadius: "5px"
               }}
             />
-            
+
             <input 
               name="weight"
               placeholder="وزن (%)"
@@ -437,7 +432,7 @@ export default function DepartmentGoalsManagement() {
                 borderRadius: "5px"
               }}
             />
-            
+
             <input 
               name="target"
               placeholder="تارگت"
@@ -449,7 +444,7 @@ export default function DepartmentGoalsManagement() {
                 borderRadius: "5px"
               }}
             />
-            
+
             <input 
               name="unit"
               placeholder="واحد"
@@ -463,7 +458,7 @@ export default function DepartmentGoalsManagement() {
             />
           </div>
         </div>
-        
+
         {/* Right Column */}
         <div style={{ 
           padding: "20px", 
@@ -471,7 +466,6 @@ export default function DepartmentGoalsManagement() {
           borderRadius: "10px"
         }}>
           <h2 style={{ marginBottom: "20px" }}>اطلاعات تکمیلی</h2>
-          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <input 
               name="failure"
@@ -484,7 +478,7 @@ export default function DepartmentGoalsManagement() {
                 borderRadius: "5px"
               }}
             />
-            
+
             <input 
               name="baseline"
               placeholder="مبنا"
@@ -496,7 +490,7 @@ export default function DepartmentGoalsManagement() {
                 borderRadius: "5px"
               }}
             />
-            
+
             <input 
               name="calculationMethod"
               placeholder="نحوه محاسبه"
@@ -508,7 +502,7 @@ export default function DepartmentGoalsManagement() {
                 borderRadius: "5px"
               }}
             />
-            
+
             <textarea 
               name="definitionOfDone"
               placeholder="تعریف از انجام شده"
@@ -521,7 +515,7 @@ export default function DepartmentGoalsManagement() {
                 minHeight: "100px"
               }}
             />
-            
+
             <div style={{ marginTop: "10px" }}>
               <div style={{ marginBottom: "10px" }}>پیشرفت ماهانه</div>
               <div style={{ 
@@ -544,7 +538,7 @@ export default function DepartmentGoalsManagement() {
                 ))}
               </div>
             </div>
-            
+
             <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
               <button 
                 onClick={handleAddKeyResult} 
@@ -564,7 +558,7 @@ export default function DepartmentGoalsManagement() {
           </div>
         </div>
       </div>
-      
+
       {/* Department Filter */}
       <div style={{ marginBottom: "20px", textAlign: "right" }}>
         <label htmlFor="departmentFilter" style={{ marginLeft: "10px" }}>فیلتر بر اساس دپارتمان:</label>
@@ -585,7 +579,7 @@ export default function DepartmentGoalsManagement() {
           ))}
         </select>
       </div>
-      
+
       {/* Results Table */}
       <h2 style={{ marginTop: "40px", marginBottom: "20px" }}>لیست Key Results</h2>
       <div style={{ overflowX: "auto" }}>
@@ -627,16 +621,13 @@ export default function DepartmentGoalsManagement() {
                   kr.target, 
                   kr.failure
                 );
-                
                 return (
                   <tr key={index}>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.department}</td>
-                    
                     {/* ✅ نمایش عنوان هدف بر اساس نوع انتخابی */}
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                       {kr.orgGoalTitle}
                     </td>
-                    
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.keyResult}</td>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.weight}</td>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{kr.target}</td>
