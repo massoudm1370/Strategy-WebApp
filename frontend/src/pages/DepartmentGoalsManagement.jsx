@@ -145,8 +145,9 @@ export default function DepartmentGoalsManagement() {
 
     // ✅ تعیین عنوان هدف بر اساس نوع انتخابی
     const selectedOrgGoalTitle = goalType === "org" 
-      ? organizationalGoals.find(g => g.title === selectedOrgGoal)?.title || selectedOrgGoal
-      : goalRepoList.find(g => g.id === selectedRepoGoal)?.title || "";
+    ? organizationalGoals.find(g => g.title === selectedOrgGoal)?.title || selectedOrgGoal
+    : goalRepoList.find(g => g.id === selectedRepoGoal)?.name || "";
+
 
     const newEntry = {
       department: selectedDepartment,
@@ -210,12 +211,14 @@ export default function DepartmentGoalsManagement() {
 
     // ✅ تنظیم انتخاب مربوط به نوع هدف
     if (krToEdit.goalType === "org") {
-      setSelectedOrgGoal(krToEdit.orgGoalTitle);
-      setSelectedRepoGoal("");
+    setSelectedOrgGoal(krToEdit.orgGoalTitle);
+   setSelectedRepoGoal("");
     } else {
-      setSelectedRepoGoal(krToEdit.orgGoalTitle); // ✅ فرض بر این است که orgGoalTitle برای مخزن استفاده می‌شود
-      setSelectedOrgGoal("");
+    const repoGoal = goalRepoList.find(g => g.name === krToEdit.orgGoalTitle);
+    setSelectedRepoGoal(repoGoal ? repoGoal.id : "");
+    setSelectedOrgGoal("");
     }
+
 
     setNewKeyResult({
       keyResult: krToEdit.keyResult,
