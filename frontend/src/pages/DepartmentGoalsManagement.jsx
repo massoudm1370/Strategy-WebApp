@@ -52,7 +52,7 @@ export default function DepartmentGoalsManagement() {
     const fetchGoalRepoList = async () => {
       setLoadingRepo(true);
       try {
-        const response = await fetch(`${baseUrl}/goal-repo`); // فرض می‌کنیم endpoint مخزن اهداف در /goal-repo قرار دارد
+        const response = await fetch(`${baseUrl}/kpis`);// فرض می‌کنیم endpoint مخزن اهداف در /goal-repo قرار دارد
         const data = await response.json();
         setGoalRepoList(data);
       } catch (error) {
@@ -375,9 +375,10 @@ export default function DepartmentGoalsManagement() {
                 }}
               >
                 <option value="">انتخاب هدف از مخزن</option>
-                {goalRepoList.map(goal => (
-                  <option key={goal.id} value={goal.id}>{goal.name}</option>
-                ))}
+                {goalRepoList.map(kpi => (
+  <option key={kpi.id} value={kpi.id}>{kpi.name}</option>
+))}
+
               </select>
             )}
 
