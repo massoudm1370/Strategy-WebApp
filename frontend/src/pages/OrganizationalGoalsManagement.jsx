@@ -1,5 +1,6 @@
-import moment from 'jalali-moment'; // ✅ اضافه شده برای تبدیل سال به شمسی
+import moment from 'jalali-moment';
 import { useState, useEffect } from "react";
+
 export default function OrganizationalGoalsManagement() {
   // States
   const [goals, setGoals] = useState([]);
@@ -9,7 +10,7 @@ export default function OrganizationalGoalsManagement() {
     failure: "",
     currentStatus: "",
     ytd: "",
-    year: moment().jYear(), // ✅ تغییر: سال شمسی به عنوان پیش‌فرض
+    year: moment().jYear(),
     half: "H1",
     calculationMethod: "",
     weight: "",
@@ -18,13 +19,19 @@ export default function OrganizationalGoalsManagement() {
   });
   const [filterBySuccess, setFilterBySuccess] = useState("all");
   const baseUrl = process.env.REACT_APP_API_URL;
+
   // States for editing
   const [isEditing, setIsEditing] = useState(false);
   const [editingGoalId, setEditingGoalId] = useState(null);
+
   // States for KPI repository
   const [kpiList, setKpiList] = useState([]);
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [loadingKpi, setLoadingKpi] = useState(false);
+
+  // ✅ افزودن وضعیت جدید برای ردیابی تغییرات دستی عنوان
+  const [isTitleManual, setIsTitleManual] = useState(false);
+
   // Load data from API on mount
   useEffect(() => {
     // Load organizational goals
@@ -35,11 +42,12 @@ export default function OrganizationalGoalsManagement() {
         console.error('❌ خطا در دریافت اهداف از سرور:', error);
         setGoals([]);
       });
+
     // Load KPI repository
     const fetchKpiList = async () => {
       setLoadingKpi(true);
       try {
-        const response = await fetch(`${baseUrl}/kpis`); // فرض می‌کنیم endpoint KPI در /kpis قرار دارد
+        const response = await fetch(`${baseUrl}/kpis`);
         const data = await response.json();
         setKpiList(data);
       } catch (error) {
@@ -50,14 +58,23 @@ export default function OrganizationalGoalsManagement() {
     };
     fetchKpiList();
   }, []);
+
   // Handle input changes
   const handleChange = (e) => {
-    setNewGoal({ ...newGoal, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setNewGoal(prev => ({ ...prev, [name]: value }));
+    
+    // ✅ اگر عنوان ویرایش شود، وضعیت دستی تنظیم می‌شود
+    if (name === "title") {
+      setIsTitleManual(true);
+    }
   };
+
   // Calculate YTD automatically from currentStatus if not manually entered
   const calculateAutoYTD = (currentStatus) => {
     return currentStatus || "";
   };
+
   // Calculate success percentage using YTD if available
   const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
     const valueToUse = ytdValue || currentStatus;
@@ -66,34 +83,36 @@ export default function OrganizationalGoalsManagement() {
     const targetNum = parseFloat(target);
     const failureNum = parseFloat(failure);
     if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
-    // Handle both cases: target > failure or target < failure
+    
     const range = Math.max(Math.abs(targetNum - failureNum), 0);
     if (range === 0) return 0;
+    
     let progress = 0;
     if (targetNum > failureNum) {
-      // Standard case: target > failure
       if (valueNum <= failureNum) return 0;
       if (valueNum >= targetNum) return 100;
       progress = valueNum - failureNum;
     } else {
-      // Inverted case: target < failure (for improvement goals)
       if (valueNum >= failureNum) return 0;
       if (valueNum <= targetNum) return 100;
       progress = failureNum - valueNum;
     }
+    
     const percentage = (progress / range) * 100;
     return Math.max(0, Math.min(percentage, 100));
   };
+
   // Handle add/edit goal
   const handleSaveGoal = () => {
     const weightValue = parseFloat(newGoal.weight) || 0;
     const totalWeight = goals.reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
+    
     if (isEditing) {
-      // Update existing goal
       if (totalWeight - (goals.find(g => g.id === editingGoalId)?.weight || 0) + weightValue > 100) {
         alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
         return;
       }
+      
       fetch(`${baseUrl}/goals/${editingGoalId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -115,11 +134,11 @@ export default function OrganizationalGoalsManagement() {
           alert('خطا در ذخیره در سرور');
         });
     } else {
-      // Add new goal
       if (totalWeight + weightValue > 100) {
         alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
         return;
       }
+      
       fetch(`${baseUrl}/goals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,6 +159,7 @@ export default function OrganizationalGoalsManagement() {
         });
     }
   };
+
   // Reset form
   const resetForm = () => {
     setNewGoal({
@@ -148,7 +168,7 @@ export default function OrganizationalGoalsManagement() {
       failure: "",
       currentStatus: "",
       ytd: "",
-      year: moment().jYear(), // ✅ تغییر: سال شمسی در ریست فرم
+      year: moment().jYear(),
       half: "H1",
       calculationMethod: "",
       weight: "",
@@ -158,10 +178,13 @@ export default function OrganizationalGoalsManagement() {
     setIsEditing(false);
     setEditingGoalId(null);
     setSelectedKpi(null);
+    setIsTitleManual(false); // ✅ بازنشانی وضعیت دستی
   };
+
   // Delete goal
   const handleDelete = (goalId) => {
     if (!window.confirm("آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟")) return;
+    
     fetch(`${baseUrl}/goals/${goalId}`, { method: 'DELETE' })
       .then(res => res.json())
       .then(result => {
@@ -178,6 +201,7 @@ export default function OrganizationalGoalsManagement() {
         alert('خطا در برقراری ارتباط با سرور');
       });
   };
+
   // Edit goal
   const handleEdit = (goalId) => {
     const goalToEdit = goals.find(goal => goal.id === goalId);
@@ -186,6 +210,7 @@ export default function OrganizationalGoalsManagement() {
     setIsEditing(true);
     setEditingGoalId(goalId);
   };
+
   // Handle KPI selection
   useEffect(() => {
     if (selectedKpi && kpiList.length > 0) {
@@ -193,7 +218,8 @@ export default function OrganizationalGoalsManagement() {
       if (selectedKpiData) {
         setNewGoal(prev => ({
           ...prev,
-          title: selectedKpiData.title, // ✅ همیشه عنوان مخزن جایگزین می‌شود
+          // ✅ فقط اگر عنوان دستی تغییر نکرده باشد، عنوان KPI را قرار ده
+          title: isTitleManual ? prev.title : selectedKpiData.title,
           target: selectedKpiData.target,
           failure: selectedKpiData.failure,
           unit: selectedKpiData.unit,
@@ -202,11 +228,13 @@ export default function OrganizationalGoalsManagement() {
         }));
       }
     }
-  }, [selectedKpi, kpiList]);
+  }, [selectedKpi, kpiList, isTitleManual]); // ✅ وابستگی به isTitleManual
+
   // Progress bar component
   const ProgressBar = ({ percentage }) => {
     const color = percentage >= 80 ? '#28a745' : 
                   percentage >= 50 ? '#ffc107' : '#dc3545';
+    
     return (
       <div style={{ 
         width: '100%', 
@@ -226,6 +254,7 @@ export default function OrganizationalGoalsManagement() {
       </div>
     );
   };
+
   // Filtered goals based on success percentage
   const filteredGoals = goals.filter(goal => {
     const successPercentage = calculateSuccessPercentage(
@@ -234,6 +263,7 @@ export default function OrganizationalGoalsManagement() {
       goal.target,
       goal.failure
     );
+    
     switch (filterBySuccess) {
       case "low":
         return successPercentage < 40;
@@ -245,6 +275,7 @@ export default function OrganizationalGoalsManagement() {
         return true;
     }
   });
+
   return (
     <div style={{ 
       padding: "20px", 
@@ -254,6 +285,7 @@ export default function OrganizationalGoalsManagement() {
       margin: "0 auto"
     }}>
       <h1 style={{ textAlign: "center", marginBottom: "30px" }}>مدیریت اهداف سازمان</h1>
+      
       {/* Form Section */}
       <div style={{ 
         display: "grid", 
@@ -267,27 +299,29 @@ export default function OrganizationalGoalsManagement() {
           borderRadius: "10px"
         }}>
           <h2 style={{ marginBottom: "20px" }}>فرم ثبت هدف</h2>
+          
           {/* KPI Selection */}
           <div style={{ marginBottom: "15px" }}>
-          <label>انتخاب هدف از مخزن:</label>
-          <select
-          value={selectedKpi}
-          onChange={(e) => setSelectedKpi(e.target.value)}
-          disabled={loadingKpi}
-          style={{
-          width: "100%",
-          padding: "10px",
-          border: "1px solid #ccc",
-          borderRadius: "5px",
-          marginTop: "5px"
-          }}
-          >
-          <option value="">-- انتخاب کنید --</option>
-          {kpiList.map(kpi => (
-         <option key={kpi.id} value={kpi.id}>{kpi.name}</option>
-         ))}
-        </select>
-        </div>
+            <label>انتخاب هدف از مخزن:</label>
+            <select
+              value={selectedKpi}
+              onChange={(e) => setSelectedKpi(e.target.value)}
+              disabled={loadingKpi}
+              style={{
+                width: "100%",
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "5px",
+                marginTop: "5px"
+              }}
+            >
+              <option value="">-- انتخاب کنید --</option>
+              {kpiList.map(kpi => (
+                <option key={kpi.id} value={kpi.id}>{kpi.name}</option>
+              ))}
+            </select>
+          </div>
+          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <input 
               name="title"
@@ -355,7 +389,7 @@ export default function OrganizationalGoalsManagement() {
                   borderRadius: "5px"
                 }}
               >
-                {Array.from({ length: 5 }, (_, i) => moment().jYear() - 2 + i).map((year) => ( // ✅ تغییر: سال شمسی در گزینه‌ها
+                {Array.from({ length: 5 }, (_, i) => moment().jYear() - 2 + i).map((year) => (
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
@@ -434,6 +468,7 @@ export default function OrganizationalGoalsManagement() {
           </div>
         </div>
       </div>
+      
       {/* Filter Section */}
       <div style={{ marginBottom: "20px", textAlign: "right" }}>
         <label htmlFor="successFilter" style={{ marginLeft: "10px" }}>فیلتر بر اساس وضعیت:</label>
@@ -454,6 +489,7 @@ export default function OrganizationalGoalsManagement() {
           <option value="high">بالا (بیش از 80%)</option>
         </select>
       </div>
+      
       {/* Results Table */}
       <h2 style={{ marginTop: "40px", marginBottom: "20px" }}>لیست اهداف سازمان</h2>
       <div style={{ overflowX: "auto" }}>
@@ -495,6 +531,7 @@ export default function OrganizationalGoalsManagement() {
                   goal.target,
                   goal.failure
                 );
+                
                 return (
                   <tr key={index}>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{goal.title}</td>
