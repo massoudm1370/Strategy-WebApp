@@ -202,9 +202,9 @@ export default function Dashboard() {
             <thead>
               <tr>
                 <th>دپارتمان</th>
-                <th>کمتر از 40% (قرمز)</th>
-                <th>40-80% (مشکی)</th>
-                <th>100% (سبز)</th>
+                <th>کمتر از 40% (در حالت ریسک)</th>
+                <th>40-80% (در حال انجام)</th>
+                <th>100% (تکمیل شده)</th>
               </tr>
             </thead>
             <tbody>
