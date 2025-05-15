@@ -13,15 +13,19 @@ router.get('/', (req, res) => {
   });
 });
 
-// افزودن KPI جدید
+// افزودن KPI جدید بدون target
 router.post('/', (req, res) => {
-  const { name, unit, target, formula } = req.body;
+  const { name, unit, formula } = req.body;
 
   if (!name || name.trim() === "") {
     return res.status(400).json({ error: "عنوان الزامی است" });
   }
 
-  const newKpi = { name: name.trim(), unit: unit?.trim() || "", target: Number(target) || 0, formula: formula?.trim() || "" };
+  const newKpi = {
+    name: name.trim(),
+    unit: unit?.trim() || "",
+    formula: formula?.trim() || ""
+  };
 
   KPIModel.add(newKpi, (err, saved) => {
     if (err) {

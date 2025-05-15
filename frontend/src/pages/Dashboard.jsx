@@ -139,7 +139,7 @@ export default function Dashboard() {
 
         <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <Filter label="سال" value={filterYear} onChange={setFilterYear} options={availableYears} />
-          <Filter label="نیمسال" value={filterHalf} onChange={setFilterHalf} options={["همه", "H1", "H2"]} />
+          <Filter label="نیمسال" value={filterHalf} onChange={setFilterHalf} options={["H1", "H2"]} />
           <Filter label="هدف سازمانی" value={filterOrganizationalGoal} onChange={(val) => {
             setFilterOrganizationalGoal(val);
             setSelectedOrganizationalGoal(val);

@@ -4,7 +4,7 @@ const KPIModel = {
   // دریافت همه KPIها
   getAll: (callback) => {
     try {
-      const stmt = db.prepare("SELECT * FROM kpis");
+      const stmt = db.prepare("SELECT id, name, unit, formula FROM kpis");
       const rows = stmt.all();
       callback(null, rows);
     } catch (err) {
@@ -12,15 +12,15 @@ const KPIModel = {
     }
   },
 
-  // افزودن KPI جدید
+  // افزودن KPI جدید بدون target
   add: (kpi, callback) => {
     try {
-      const { name, unit, target, formula } = kpi;
-      const stmt = db.prepare("INSERT INTO kpis (name, unit, target, formula) VALUES (?, ?, ?, ?)");
-      const info = stmt.run(name, unit, target, formula);
+      const { name, unit, formula } = kpi;
+      const stmt = db.prepare("INSERT INTO kpis (name, unit, formula) VALUES (?, ?, ?)");
+      const info = stmt.run(name, unit, formula);
 
       // بازگرداندن رکورد ذخیره‌شده به همراه شناسه جدید
-      callback(null, { id: info.lastInsertRowid, name, unit, target, formula });
+      callback(null, { id: info.lastInsertRowid, name, unit, formula });
     } catch (err) {
       callback(err);
     }
@@ -33,7 +33,6 @@ const KPIModel = {
       const info = stmt.run(id);
 
       if (info.changes === 0) {
-        // در صورتی که رکوردی حذف نشده باشد
         callback(new Error("KPI یافت نشد یا قبلاً حذف شده است."));
       } else {
         callback(null, { success: true });

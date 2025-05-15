@@ -4,7 +4,6 @@ export default function KPIManagement() {
   const [kpis, setKpis] = useState([]);
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
-  const [target, setTarget] = useState("");
   const [formula, setFormula] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,12 +17,12 @@ export default function KPIManagement() {
   }, [baseUrl]);
 
   const handleAddKPI = () => {
-    if (!name.trim() || !unit.trim() || !target.trim()) {
+    if (!name.trim() || !unit.trim()) {
       alert("لطفاً تمام فیلدها را تکمیل کنید.");
       return;
     }
 
-    const newKpi = { name, unit, target: Number(target), formula };
+    const newKpi = { name, unit, formula };
     setIsSubmitting(true);
 
     fetch(`${baseUrl}/kpis`, {
@@ -36,7 +35,6 @@ export default function KPIManagement() {
         setKpis([...kpis, saved]);
         setName("");
         setUnit("");
-        setTarget("");
         setFormula("");
       })
       .catch(err => console.error("خطا در افزودن KPI:", err))
@@ -66,10 +64,6 @@ export default function KPIManagement() {
         <input value={unit} onChange={(e) => setUnit(e.target.value)} style={{ width: "100%", padding: "10px" }} />
       </div>
       <div style={{ marginBottom: "20px" }}>
-        <label>هدف:</label>
-        <input value={target} onChange={(e) => setTarget(e.target.value)} type="number" style={{ width: "100%", padding: "10px" }} />
-      </div>
-      <div style={{ marginBottom: "20px" }}>
         <label>فرمول یا توضیح:</label>
         <textarea value={formula} onChange={(e) => setFormula(e.target.value)} style={{ width: "100%", padding: "10px" }} />
       </div>
@@ -95,7 +89,6 @@ export default function KPIManagement() {
           <tr style={{ backgroundColor: "#f0f0f0" }}>
             <th style={{ padding: "10px", border: "1px solid #ccc" }}>عنوان</th>
             <th style={{ padding: "10px", border: "1px solid #ccc" }}>واحد</th>
-            <th style={{ padding: "10px", border: "1px solid #ccc" }}>هدف</th>
             <th style={{ padding: "10px", border: "1px solid #ccc" }}>فرمول/توضیح</th>
             <th style={{ padding: "10px", border: "1px solid #ccc" }}>عملیات</th>
           </tr>
@@ -105,7 +98,6 @@ export default function KPIManagement() {
             <tr key={kpi.id} style={{ borderBottom: "1px solid #ccc" }}>
               <td style={{ padding: "10px", border: "1px solid #ccc" }}>{kpi.name}</td>
               <td style={{ padding: "10px", border: "1px solid #ccc" }}>{kpi.unit}</td>
-              <td style={{ padding: "10px", border: "1px solid #ccc" }}>{kpi.target}</td>
               <td style={{ padding: "10px", border: "1px solid #ccc" }}>{kpi.formula}</td>
               <td style={{ padding: "10px", border: "1px solid #ccc" }}>
                 <button
