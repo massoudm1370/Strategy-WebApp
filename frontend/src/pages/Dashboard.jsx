@@ -8,20 +8,22 @@ import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-// تعریف کامپوننت AIAlerts خارج از Dashboard
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+// 📌 هشدار اهداف سازمانی
 const OrgGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/goals/alerts`)
+      .get(`${process.env.REACT_APP_API_URL}/goals/alerts`) // ✅ حذف /api
       .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err));
   }, []);
 
   return (
     <div
-      className="alert-card"
       style={{
         backgroundColor: "#FFF8E1",
         border: "1px solid #FFD54F",
@@ -39,19 +41,20 @@ const OrgGoalsAlerts = () => {
     </div>
   );
 };
+
+// 📌 هشدار اهداف دپارتمانی
 const DeptGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/department-goals/alerts`)
+      .get(`${process.env.REACT_APP_API_URL}/department-goals/alerts`) // ✅ حذف /api
       .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err));
   }, []);
 
   return (
     <div
-      className="alert-card"
       style={{
         backgroundColor: "#FFF8E1",
         border: "1px solid #FFD54F",
@@ -69,6 +72,9 @@ const DeptGoalsAlerts = () => {
     </div>
   );
 };
+
+export { OrgGoalsAlerts, DeptGoalsAlerts };
+
 
 
 // تابع محاسبه درصد موفقیت
