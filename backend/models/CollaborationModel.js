@@ -2,9 +2,10 @@ const db = require('../db');
 
 exports.getAll = () => {
   try {
-    return db.prepare('SELECT * FROM collaboration_notes ORDER BY createdAt DESC').all();
-  } catch (error) {
-    throw error;
+    const stmt = db.prepare('SELECT * FROM collaboration_notes ORDER BY createdAt DESC');
+    return stmt.all();
+  } catch (err) {
+    throw err;
   }
 };
 

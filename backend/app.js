@@ -38,7 +38,7 @@ const collaborationRoutes = require('./routes/collaboration');
 
 
 
-
+app.use('/uploads', express.static('uploads'));
 app.use('/api/collaboration', collaborationRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/department-goals', departmentGoalsRoutes);
