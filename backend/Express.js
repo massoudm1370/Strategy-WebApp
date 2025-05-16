@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/Qwen/Qwen2-5-Omni-7B';
+const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/google/flan-t5-small';
 const huggingFaceApiKey = process.env.HUGGINGFACE_API_KEY;
 
 router.get('/keyresults/alerts', async (req, res) => {

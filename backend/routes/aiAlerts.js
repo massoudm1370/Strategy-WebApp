@@ -6,6 +6,7 @@ console.log('HUGGINGFACE_API_KEY:', process.env.HUGGINGFACE_API_KEY ? '✅ Loade
 
 const useAI = process.env.USE_AI_ALERTS === 'true';
 const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/google/flan-t5-small';
+
 // 📌 تابع آماده سازی هدر
 const prepareHeaders = () => {
   const headers = { 'Content-Type': 'application/json' };
