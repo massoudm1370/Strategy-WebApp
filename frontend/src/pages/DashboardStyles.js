@@ -154,16 +154,18 @@ const styles = {
     color: "#223F98",
     marginBottom: "1.5rem"
   },
-  exportModal: {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    backgroundColor: "white",
-    padding: "1rem",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
-  },
+exportModal: {
+  position: "absolute",  // ✅ نمایش زیر دکمه
+  top: "50px",           // ✅ فاصله از بالا (متناسب با موقعیت دکمه تنظیم کنید)
+  right: "10px",         // ✅ چسبیده به سمت راست دکمه
+  background: "#fff",
+  border: "1px solid #ddd",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+  borderRadius: "4px",
+  zIndex: 1000,
+  padding: "10px"
+}
+,
   modalButton: {
     display: "block",
     width: "100%",

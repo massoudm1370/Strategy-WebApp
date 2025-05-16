@@ -55,15 +55,18 @@ export default function Dashboard() {
   );
 
   // ✅ وضعیت موفقیت دپارتمان‌ها
-  const departmentSuccess = departmentGoals.reduce((acc, kr) => {
-    if (!acc[kr.department]) acc[kr.department] = { total: 0, low: 0, medium: 0, high: 0 };
+const departmentSuccess = departments.reduce((acc, dept) => {
+  const related = departmentGoals.filter(kr => kr.department === dept.name);
+  acc[dept.name] = { total: related.length, low: 0, medium: 0, high: 0 };
+  related.forEach(kr => {
     const success = calculateSuccessPercentage(kr.ytd, kr.currentStatus, kr.target, kr.failure);
-    acc[kr.department].total += 1;
-    if (success < 40) acc[kr.department].low += 1;
-    else if (success >= 40 && success < 80) acc[kr.department].medium += 1;
-    else if (success >= 80) acc[kr.department].high += 1;
-    return acc;
-  }, {});
+    if (success < 40) acc[dept.name].low += 1;
+    else if (success >= 40 && success < 80) acc[dept.name].medium += 1;
+    else if (success >= 80) acc[dept.name].high += 1;
+  });
+  return acc;
+}, {});
+
 
   // ✅ تابع خروجی اکسل
   const exportToExcel = () => {
@@ -128,10 +131,10 @@ export default function Dashboard() {
 
       {/* کارت‌های KPI */}
       <section style={styles.kpiSection}>
-        <KPICard title="تعداد کاربران" value={`${users.length}`} icon="👥" progress={100} />
-        <KPICard title="تعداد Key Result های ثبت‌شده" value={`${departmentGoals.length}`} icon="✅" progress={100} />
-        <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯" progress={100} />
-        <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" progress={100} />
+        <KPICard title="تعداد کاربران" value={`${users.length}`} icon="👥" />
+        <KPICard title="تعداد Key Result های ثبت‌شده" value={`${departmentGoals.length}`} icon="✅"/>
+        <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯" />
+        <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" />
       </section>
       {/* راهنمای وضعیت دپارتمان‌ها */}
       <p style={{ marginTop: "20px", marginBottom: "10px", color: "#555", textAlign: "right" }}>
