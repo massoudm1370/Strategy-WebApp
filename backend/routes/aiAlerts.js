@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+require('dotenv').config();
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
 
 // کنترل فعال یا غیرفعال بودن ChatGPT از طریق متغیر محیطی
 const useAI = process.env.USE_AI_ALERTS === 'true';
