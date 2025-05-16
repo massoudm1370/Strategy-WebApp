@@ -2,9 +2,19 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 require('dotenv').config();
-console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
+console.log('HUGGINGFACE_API_KEY:', process.env.HUGGINGFACE_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
 
 const useAI = process.env.USE_AI_ALERTS === 'true';
+const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/gpt2'; // یا هر مدل دلخواه
+
+// 📌 تابع آماده سازی هدر
+const prepareHeaders = () => {
+  const headers = { 'Content-Type': 'application/json' };
+  if (process.env.HUGGINGFACE_API_KEY) {
+    headers['Authorization'] = `Bearer ${process.env.HUGGINGFACE_API_KEY}`;
+  }
+  return headers;
+};
 
 // 📌 مسیر هشدار اهداف سازمانی
 router.get('/goals/alerts', async (req, res) => {
@@ -18,24 +28,13 @@ router.get('/goals/alerts', async (req, res) => {
     }
 
     if (useAI) {
-      const openaiResponse = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-4-turbo',
-          messages: [
-            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید.' },
-            { role: 'user', content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}` }
-          ]
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          },
-          timeout: 10000
-        }
+      const aiPrompt = `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
+      const huggingFaceResponse = await axios.post(
+        huggingFaceModelUrl,
+        { inputs: aiPrompt },
+        { headers: prepareHeaders(), timeout: 10000 }
       );
-      return res.json({ alerts: openaiResponse.data.choices[0].message.content });
+      return res.json({ alerts: huggingFaceResponse.data });
     }
 
     const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
@@ -59,24 +58,13 @@ router.get('/department-goals/alerts', async (req, res) => {
     }
 
     if (useAI) {
-      const openaiResponse = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-4-turbo',
-          messages: [
-            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید.' },
-            { role: 'user', content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}` }
-          ]
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          },
-          timeout: 10000
-        }
+      const aiPrompt = `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`;
+      const huggingFaceResponse = await axios.post(
+        huggingFaceModelUrl,
+        { inputs: aiPrompt },
+        { headers: prepareHeaders(), timeout: 10000 }
       );
-      return res.json({ alerts: openaiResponse.data.choices[0].message.content });
+      return res.json({ alerts: huggingFaceResponse.data });
     }
 
     const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`;
@@ -88,27 +76,17 @@ router.get('/department-goals/alerts', async (req, res) => {
   }
 });
 
-// 📌 مسیر تست مستقیم OpenAI
+// 📌 مسیر تست مستقیم Hugging Face
 router.get('/test-openai', async (req, res) => {
   try {
     const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4-turbo',
-        messages: [{ role: 'user', content: 'Hello from DigiExpress' }]
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        timeout: 10000
-      }
+      huggingFaceModelUrl,
+      { inputs: "Hello from DigiExpress" },
+      { headers: prepareHeaders(), timeout: 10000 }
     );
-
-    res.json({ reply: response.data.choices[0].message.content });
+    res.json({ reply: response.data });
   } catch (error) {
-    console.error("❌ Error contacting OpenAI:", error.message);
+    console.error("❌ Error contacting Hugging Face:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
