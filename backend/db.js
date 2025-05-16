@@ -1,7 +1,9 @@
 const Database = require('better-sqlite3');  // ✅ تغییر به better-sqlite3
+const path = require('path');
 
-// اتصال به دیتابیس
-const db = new Database('./strategy.db');
+// تعیین مسیر کامل دیتابیس
+const dbPath = path.resolve(__dirname, 'strategy.db');
+const db = new Database(dbPath);
 console.log('✅ اتصال به دیتابیس برقرار شد.');
 
 // خروجی ماژول
