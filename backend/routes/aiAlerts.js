@@ -7,6 +7,15 @@ console.log('HUGGINGFACE_API_KEY:', process.env.HUGGINGFACE_API_KEY ? '✅ Loade
 const useAI = process.env.USE_AI_ALERTS === 'true';
 const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/gpt2'; // یا هر مدل دلخواه
 
+// 📌 تابع آماده سازی هدر
+const prepareHeaders = () => {
+  const headers = { 'Content-Type': 'application/json' };
+  if (process.env.HUGGINGFACE_API_KEY) {
+    headers['Authorization'] = `Bearer ${process.env.HUGGINGFACE_API_KEY}`;
+  }
+  return headers;
+};
+
 // 📌 مسیر هشدار اهداف سازمانی
 router.get('/goals/alerts', async (req, res) => {
   try {
@@ -23,13 +32,7 @@ router.get('/goals/alerts', async (req, res) => {
       const huggingFaceResponse = await axios.post(
         huggingFaceModelUrl,
         { inputs: aiPrompt },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(process.env.HUGGINGFACE_API_KEY && { 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}` })
-          },
-          timeout: 10000
-        }
+        { headers: prepareHeaders(), timeout: 10000 }
       );
       return res.json({ alerts: huggingFaceResponse.data });
     }
@@ -59,13 +62,7 @@ router.get('/department-goals/alerts', async (req, res) => {
       const huggingFaceResponse = await axios.post(
         huggingFaceModelUrl,
         { inputs: aiPrompt },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(process.env.HUGGINGFACE_API_KEY && { 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}` })
-          },
-          timeout: 10000
-        }
+        { headers: prepareHeaders(), timeout: 10000 }
       );
       return res.json({ alerts: huggingFaceResponse.data });
     }
@@ -85,15 +82,8 @@ router.get('/test-openai', async (req, res) => {
     const response = await axios.post(
       huggingFaceModelUrl,
       { inputs: "Hello from DigiExpress" },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(process.env.HUGGINGFACE_API_KEY && { 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}` })
-        },
-        timeout: 10000
-      }
+      { headers: prepareHeaders(), timeout: 10000 }
     );
-
     res.json({ reply: response.data });
   } catch (error) {
     console.error("❌ Error contacting Hugging Face:", error.message);
