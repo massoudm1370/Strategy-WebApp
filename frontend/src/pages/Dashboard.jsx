@@ -5,7 +5,7 @@ import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import axios from "axios";
-
+console.log("✅ Dashboard component loaded");
 const API_URL = process.env.REACT_APP_API_URL;
 // 📌 هشدار اهداف سازمانی
 const OrgGoalsAlerts = () => {
