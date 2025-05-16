@@ -92,19 +92,6 @@ const OrgGoalsAlerts = ({ organizationalGoals }) => {
 };
 
 
-// تابع محاسبه درصد موفقیت
-
-  const valueToUse = ytdValue || currentStatus;
-  if (!valueToUse || !target || !failure) return 0;
-  const valueNum = parseFloat(valueToUse);
-  const targetNum = parseFloat(target);
-  const failureNum = parseFloat(failure);
-  if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
-  if (targetNum <= failureNum) return 0;
-  if (valueNum >= targetNum) return 100;
-  if (valueNum <= failureNum) return 0;
-  return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
-
 
 export default function Dashboard() {
   const [strategyInfo, setStrategyInfo] = useState({ vision: "", mission: "", core_values: "" });
