@@ -33,7 +33,7 @@ const strategyRoutes = require('./routes/strategy');
 const departmentGoalsRoutes = require('./routes/departmentGoals');
 const integrationsRoutes = require('./routes/integrations');
 const kpisRoutes = require('./routes/kpis'); // ✅ اضافه شده
-
+const messageRoutes = require('./routes/messages');
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/department-goals', departmentGoalsRoutes);
 app.use('/api/goals', goalsRoutes);
@@ -41,7 +41,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/departments', departmentsRoutes);
 app.use('/api/strategy', strategyRoutes);
 app.use('/api/kpis', kpisRoutes); // ✅ اضافه شده
-
+app.use('/api/messages', messageRoutes);
 // Start Server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

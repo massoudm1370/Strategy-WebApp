@@ -8,19 +8,32 @@ export default function Collaboration() {
   const [noteText, setNoteText] = useState("");
   const [file, setFile] = useState(null);
 
-  // دریافت یادداشت‌ها در بارگذاری اولیه صفحه
+  // گیرنده پیام و لیست دپارتمان‌ها
+  const [recipient, setRecipient] = useState("");
+  const [departments, setDepartments] = useState([]);
+
+  // دریافت یادداشت‌ها و دپارتمان‌ها در بارگذاری اولیه صفحه
   useEffect(() => {
     fetch(`${API_URL}/collaboration`)
       .then((res) => res.json())
       .then((data) => setNotes(data || []))
       .catch((err) => console.error("خطا در دریافت یادداشت‌ها:", err));
+
+    fetch(`${API_URL}/departments`)
+      .then((res) => res.json())
+      .then((data) => setDepartments(data || []))
+      .catch((err) => console.error("خطا در دریافت دپارتمان‌ها:", err));
   }, []);
 
   // افزودن یادداشت جدید
   const handleAddNote = () => {
     if (!noteText.trim() && !file) return;
+    if (!recipient) {
+      alert("لطفاً یک گیرنده را انتخاب کنید.");
+      return;
+    }
 
-    const newNote = { text: noteText, fileName: file ? file.name : null };
+    const newNote = { text: noteText, fileName: file ? file.name : null, recipient };
 
     fetch(`${API_URL}/collaboration`, {
       method: "POST",
@@ -32,6 +45,7 @@ export default function Collaboration() {
         setNotes([...notes, savedNote]);
         setNoteText("");
         setFile(null);
+        setRecipient("");
       })
       .catch((err) => console.error("خطا در ذخیره یادداشت:", err));
   };
@@ -51,6 +65,20 @@ export default function Collaboration() {
 
       {/* فرم افزودن یادداشت */}
       <div style={{ marginBottom: "20px", background: "white", padding: "20px", borderRadius: "8px" }}>
+        <select
+          value={recipient}
+          onChange={(e) => setRecipient(e.target.value)}
+          style={{ width: "95%", padding: "12px", margin: "5px 0 15px", border: "1px solid #ddd", borderRadius: "6px" }}
+        >
+          <option value="">انتخاب گیرنده</option>
+          <option value="مدیر سیستم">مدیر سیستم</option>
+          {departments.map((dept) => (
+            <option key={dept.id} value={dept.name}>
+              مدیر {dept.name}
+            </option>
+          ))}
+        </select>
+
         <textarea
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
@@ -75,6 +103,7 @@ export default function Collaboration() {
       <ul style={{ background: "white", padding: "20px", borderRadius: "8px" }}>
         {notes.map((note) => (
           <li key={note.id} style={{ marginBottom: "10px" }}>
+            {note.recipient && <p>🧑‍💼 گیرنده: {note.recipient}</p>}
             {note.text && <p>{note.text}</p>}
             {note.fileName && <p>📎 {note.fileName}</p>}
             <button
