@@ -49,6 +49,7 @@ app.use('/api/departments', departmentsRoutes);
 app.use('/api/strategy', strategyRoutes);
 app.use('/api/kpis', kpisRoutes); // ✅ اضافه شده
 app.use('/api/messages', messageRoutes);
+
 // Start Server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
