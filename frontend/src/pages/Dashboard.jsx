@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [filterDepartment, setFilterDepartment] = useState("");
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [selectedOrganizationalGoal, setSelectedOrganizationalGoal] = useState("");
+
   useEffect(() => {
     fetch(`${API_URL}/strategy`).then(res => res.json()).then(setStrategyInfo);
     fetch(`${API_URL}/goals`).then(res => res.json()).then(setOrganizationalGoals);
@@ -43,7 +44,6 @@ export default function Dashboard() {
     fetch(`${API_URL}/departments`).then(res => res.json()).then(setDepartments);
     fetch(`${API_URL}/users`).then(res => res.json()).then(setUsers);
     fetch(`${API_URL}/kpis`).then(res => res.json()).then(setKpiRepository);
-
     fetch(`${API_URL}/messages`)
       .then(res => res.json())
       .then(data => {
@@ -55,6 +55,7 @@ export default function Dashboard() {
   }, []);
 
   const availableYears = [...new Set([...organizationalGoals.map(g => g.year), ...departmentGoals.map(kr => kr.year)])];
+
   const filteredOrganizationalGoals = organizationalGoals.filter(g =>
     (!filterYear || g.year === filterYear) &&
     (filterHalf === "همه" || g.halfYear === filterHalf) &&
@@ -72,6 +73,7 @@ export default function Dashboard() {
     });
     return acc;
   }, {});
+
   const exportToExcel = () => {
     const summary = [
       { "چشم‌انداز": strategyInfo.vision },
@@ -105,7 +107,7 @@ export default function Dashboard() {
   return (
     <div style={styles.container} id="dashboard-content">
       <header style={styles.header}>
-        <div style={styles.actions}>
+        <div style={{ ...styles.actions, position: "relative" }}>
           <button onClick={() => setShowExportOptions(!showExportOptions)} style={styles.exportButton}>
             دریافت گزارش
           </button>
@@ -150,7 +152,7 @@ export default function Dashboard() {
               }}>
                 {unreadMessages.length === 0 && <p>هیچ پیام جدیدی ندارید.</p>}
                 {unreadMessages.map((msg, idx) => (
-                  <div key={idx} style={{ borderBottom: "1px solid #eee", padding: "5px 0" }}>
+                  <div key={msg.id || idx} style={{ borderBottom: "1px solid #eee", padding: "5px 0" }}>
                     <strong>از: {msg.sender}</strong><br />
                     {msg.text}
                   </div>
@@ -160,6 +162,7 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
       {/* بخش چشم‌انداز، ماموریت و ارزش‌ها */}
       <div style={styles.strategySection}>
         <div style={styles.strategyCard}><h3>چشم‌انداز</h3><p>{strategyInfo.vision || "اطلاعاتی ثبت نشده است"}</p></div>
@@ -180,6 +183,7 @@ export default function Dashboard() {
         <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯" progress={100} />
         <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" progress={100} />
       </section>
+
       <table style={styles.departmentTable}>
         <thead>
           <tr style={{ backgroundColor: "#223F98", color: "white" }}>
@@ -221,7 +225,7 @@ export default function Dashboard() {
           <h2>پیام‌های ارسالی</h2>
           {messages.slice(-4).reverse().map((msg, idx) => (
             <ActivityItem
-              key={idx}
+              key={msg.id || idx}
               user={`ارسال‌کننده: ${msg.sender || "نامشخص"}`}
               time={`زمان ارسال: ${msg.createdAt || "نامشخص"}`}
               message={`گیرنده: ${msg.recipient || "نامشخص"} - ${msg.text || ""}`}
@@ -229,15 +233,10 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
-
-      {showExportOptions && (
-        <div style={styles.exportModal}>
-          <button onClick={exportToPDF} style={styles.modalButton}>خروجی PDF</button>
-          <button onClick={exportToExcel} style={styles.modalButton}>خروجی Excel</button>
-        </div>
-      )}
     </div>
   );
+}
+
 function KPICard({ title, value, icon, progress }) {
   return (
     <div style={styles.kpiCard}>
