@@ -4,9 +4,10 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+
 const API_URL = process.env.REACT_APP_API_URL;
 
-// محاسبه درصد موفقیت
+// ✅ تابع محاسبه درصد موفقیت
 const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
   const valueToUse = ytdValue || currentStatus;
   if (!valueToUse || !target || !failure) return 0;
@@ -21,56 +22,39 @@ const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) =>
 };
 
 export default function Dashboard() {
-  // حالت‌ها
+  // ✅ تعریف حالت‌ها
   const [strategyInfo, setStrategyInfo] = useState({ vision: "", mission: "", core_values: "" });
   const [organizationalGoals, setOrganizationalGoals] = useState([]);
   const [departmentGoals, setDepartmentGoals] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
+  const [kpiRepository, setKpiRepository] = useState([]);
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [filterHalf, setFilterHalf] = useState("همه");
-  const [filterOrganizationalGoal, setFilterOrganizationalGoal] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [selectedOrganizationalGoal, setSelectedOrganizationalGoal] = useState("");
 
-  // دریافت داده‌ها از API
+  // ✅ دریافت داده‌ها از API
   useEffect(() => {
-    fetch(`${API_URL}/strategy`)
-      .then(res => res.json())
-      .then(data => setStrategyInfo(data || { vision: "", mission: "", core_values: "" }));
-    fetch(`${API_URL}/goals`)
-      .then(res => res.json())
-      .then(data => {
-        setOrganizationalGoals(data || []);
-        setDepartmentGoals(data || []);
-      });
-    fetch(`${API_URL}/departments`)
-      .then(res => res.json())
-      .then(data => setDepartments(data || []));
-    fetch(`${API_URL}/users`)
-      .then(res => res.json())
-      .then(data => setUsers(data || []));
+    fetch(`${API_URL}/strategy`).then(res => res.json()).then(data => setStrategyInfo(data || {}));
+    fetch(`${API_URL}/goals`).then(res => res.json()).then(data => {
+      setOrganizationalGoals(data || []);
+      setDepartmentGoals(data || []);
+    });
+    fetch(`${API_URL}/departments`).then(res => res.json()).then(data => setDepartments(data || []));
+    fetch(`${API_URL}/users`).then(res => res.json()).then(data => setUsers(data || []));
+    fetch(`${API_URL}/kpis`).then(res => res.json()).then(data => setKpiRepository(data || []));
   }, []);
-
-  // فیلتر اهداف سازمانی
+  // ✅ فیلتر اهداف سازمانی
   const availableYears = [...new Set([...organizationalGoals.map(g => g.year), ...departmentGoals.map(kr => kr.year)])];
-  const filteredOrganizationalGoals = organizationalGoals.filter(g => 
-    (!filterYear || g.year === filterYear) && 
+  const filteredOrganizationalGoals = organizationalGoals.filter(g =>
+    (!filterYear || g.year === filterYear) &&
     (filterHalf === "همه" || g.halfYear === filterHalf) &&
     (filterDepartment === "همه" || g.department === filterDepartment)
   );
 
-  // اهداف مرتبط با دپارتمان‌ها
-  const relatedDepartments = [...new Set(departmentGoals.filter(kr => kr.title === selectedOrganizationalGoal).map(kr => kr.department))];
-  const relatedKeyResults = departmentGoals.filter(kr => kr.title === selectedOrganizationalGoal);
-  const groupedKR = relatedKeyResults.reduce((acc, kr) => {
-    if (!acc[kr.department]) acc[kr.department] = [];
-    acc[kr.department].push(kr);
-    return acc;
-  }, {});
-
-  // محاسبه وضعیت دپارتمان‌ها
+  // ✅ وضعیت موفقیت دپارتمان‌ها
   const departmentSuccess = departmentGoals.reduce((acc, kr) => {
     if (!acc[kr.department]) acc[kr.department] = { total: 0, low: 0, medium: 0, high: 0 };
     const success = calculateSuccessPercentage(kr.ytd, kr.currentStatus, kr.target, kr.failure);
@@ -81,7 +65,7 @@ export default function Dashboard() {
     return acc;
   }, {});
 
-  // توابع گزارش‌گیری
+  // ✅ تابع خروجی اکسل
   const exportToExcel = () => {
     const summary = [
       { "چشم‌انداز": strategyInfo.vision },
@@ -91,7 +75,7 @@ export default function Dashboard() {
       { "کاربران": users.length },
       { "اهداف سازمانی": filteredOrganizationalGoals.length }
     ];
-    const worksheet = XLSX.utils.json_to_sheet([...summary, ...relatedKeyResults]);
+    const worksheet = XLSX.utils.json_to_sheet([...summary, ...departmentGoals]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "داشبورد");
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
@@ -99,6 +83,7 @@ export default function Dashboard() {
     setShowExportOptions(false);
   };
 
+  // ✅ تابع خروجی PDF
   const exportToPDF = () => {
     const input = document.getElementById("dashboard-content");
     html2canvas(input).then(canvas => {
@@ -111,62 +96,56 @@ export default function Dashboard() {
       setShowExportOptions(false);
     });
   };
-
   return (
-    <div style={styles.container}>
-      {/* ✅ تغییرات درخواستی: حذف بخش مدیر راهبردی و عکس پروفایل */}
+    <div style={styles.container} id="dashboard-content">
+
+      {/* نوار بالا */}
       <header style={styles.header}>
         <div style={styles.actions}>
-          <button onClick={() => setShowExportOptions(!showExportOptions)} style={styles.exportButton}>
-            دریافت گزارش
-          </button>
+          <button onClick={() => setShowExportOptions(!showExportOptions)} style={styles.exportButton}>دریافت گزارش</button>
           <input type="search" placeholder="جستجو..." style={styles.searchInput} />
         </div>
       </header>
 
-      {/* بخش فیلترها */}
+      {/* بخش چشم‌انداز، ماموریت و ارزش‌ها */}
+      <div style={styles.strategySection}>
+        <div style={styles.strategyCard}><h3>چشم‌انداز</h3><p>{strategyInfo.vision || "اطلاعاتی ثبت نشده است"}</p></div>
+        <div style={styles.strategyCard}><h3>ماموریت</h3><p>{strategyInfo.mission || "اطلاعاتی ثبت نشده است"}</p></div>
+        <div style={styles.strategyCard}><h3>ارزش‌ها</h3><p>{strategyInfo.core_values || "اطلاعاتی ثبت نشده است"}</p></div>
+      </div>
+
+      {/* فیلترها */}
       <div style={styles.filterBar}>
         <Filter label="دپارتمان" value={filterDepartment} onChange={setFilterDepartment} options={["همه", ...departments.map(d => d.name)]} />
         <Filter label="سال" value={filterYear} onChange={setFilterYear} options={availableYears} />
         <Filter label="نیمسال" value={filterHalf} onChange={setFilterHalf} options={["همه", "H1", "H2"]} />
-        <Filter label="هدف سازمانی" value={selectedOrganizationalGoal} onChange={(val) => {
-          setSelectedOrganizationalGoal(val);
-          setFilterOrganizationalGoal(val);
-        }} options={organizationalGoals.map(g => g.title)} />
       </div>
 
-      {/* ✅ تغییرات درخواستی: انتقال چشم‌انداز، ماموریت، ارزش‌ها بین فیلترها و کارتها */}
-      <div style={styles.strategySection}>
-        <div style={styles.strategyCard}>
-          <h3 style={styles.cardTitle}>چشم‌انداز</h3>
-          <p>{strategyInfo.vision || "اطلاعاتی ثبت نشده است"}</p>
-        </div>
-        <div style={styles.strategyCard}>
-          <h3 style={styles.cardTitle}>ماموریت</h3>
-          <p>{strategyInfo.mission || "اطلاعاتی ثبت نشده است"}</p>
-        </div>
-        <div style={styles.strategyCard}>
-          <h3 style={styles.cardTitle}>ارزش‌ها</h3>
-          <p>{strategyInfo.core_values || "اطلاعاتی ثبت نشده است"}</p>
-        </div>
-      </div>
+      {/* راهنمای KPI ها */}
+      <p style={{ marginTop: "20px", marginBottom: "10px", color: "#555", textAlign: "right" }}>
+        آمار زیر بر اساس آخرین اطلاعات کاربران، اهداف، Key Result ها و KPIهای ثبت‌شده در سیستم نمایش داده می‌شود.
+      </p>
 
-      {/* بخش KPI ها */}
+      {/* کارت‌های KPI */}
       <section style={styles.kpiSection}>
-        <KPICard title="همکاری تیمی" value="85%" icon="👥" progress={85} />
-        <KPICard title="اقدامات فعال" value="24" icon="✅" progress={60} />
-        <KPICard title="اهداف استراتژیک" value="12/15" icon="🎯" progress={80} />
-        <KPICard title="KPI تکمیل" value="76%" icon="📊" progress={76} />
+        <KPICard title="تعداد کاربران" value={`${users.length}`} icon="👥" progress={100} />
+        <KPICard title="تعداد Key Result های ثبت‌شده" value={`${departmentGoals.length}`} icon="✅" progress={100} />
+        <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯" progress={100} />
+        <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" progress={100} />
       </section>
+      {/* راهنمای وضعیت دپارتمان‌ها */}
+      <p style={{ marginTop: "20px", marginBottom: "10px", color: "#555", textAlign: "right" }}>
+        وضعیت زیر براساس تعداد اهداف ثبت‌شده برای هر دپارتمان و درصد موفقیت آن‌ها محاسبه شده است.
+      </p>
 
-      {/* ✅ تغییرات درخواستی: جدول وضعیت دپارتمان‌ها به زیر کارتها منتقل شود */}
+      {/* جدول وضعیت دپارتمان‌ها */}
       <table style={styles.departmentTable}>
         <thead>
           <tr style={{ backgroundColor: "#223F98", color: "white" }}>
-            <th style={{ padding: "12px", textAlign: "center" }}>دپارتمان</th>
-            <th style={{ padding: "12px", textAlign: "center" }}>کمتر از 40% (ریسک)</th>
-            <th style={{ padding: "12px", textAlign: "center" }}>40-80% (در حال انجام)</th>
-            <th style={{ padding: "12px", textAlign: "center" }}>بیش از 80% (تکمیل شده)</th>
+            <th>دپارتمان</th>
+            <th>کمتر از 40% (ریسک)</th>
+            <th>40-80% (در حال انجام)</th>
+            <th>بیش از 80% (تکمیل شده)</th>
           </tr>
         </thead>
         <tbody>
@@ -174,23 +153,23 @@ export default function Dashboard() {
             const stats = departmentSuccess[dept.name] || { total: 0, low: 0, medium: 0, high: 0 };
             return (
               <tr key={dept.name}>
-                <td style={{ padding: "12px", border: "1px solid #ddd", textAlign: "center" }}>{dept.name}</td>
-                <td style={{ padding: "12px", border: "1px solid #ddd", color: "#f44336", textAlign: "center" }}>{stats.low}</td>
-                <td style={{ padding: "12px", border: "1px solid #ddd", color: "#ff9800", textAlign: "center" }}>{stats.medium}</td>
-                <td style={{ padding: "12px", border: "1px solid #ddd", color: "#4caf50", textAlign: "center" }}>{stats.high}</td>
+                <td>{dept.name}</td>
+                <td style={{ color: "#f44336", textAlign: "center" }}>{stats.low}</td>
+                <td style={{ color: "#ff9800", textAlign: "center" }}>{stats.medium}</td>
+                <td style={{ color: "#4caf50", textAlign: "center" }}>{stats.high}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
 
-      {/* ✅ تغییرات درخواستی: بخش پیشرفت اهداف و کامنت‌ها در دو باکس کنار هم */}
+      {/* بخش پیشرفت اهداف و کامنت‌ها */}
       <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-        {/* بخش پیشرفت اهداف سازمانی */}
-        <div style={{ flex: 1, ...styles.summarySection }}>
-          <h2 style={styles.sectionTitle}>پیشرفت اهداف استراتژیک</h2>
+        {/* پیشرفت اهداف */}
+        <div style={{ flex: 1 }}>
+          <h2>پیشرفت اهداف استراتژیک</h2>
           {filteredOrganizationalGoals.map(goal => (
-            <GoalProgress 
+            <GoalProgress
               key={goal.id}
               goal={goal.title}
               progress={calculateSuccessPercentage(goal.ytd, goal.currentStatus, goal.target, goal.failure)}
@@ -199,11 +178,11 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* بخش کامنت‌ها */}
-        <div style={{ flex: 1, ...styles.activityLog }}>
-          <h2 style={styles.sectionTitle}>کامنت‌ها</h2>
+        {/* کامنت‌ها */}
+        <div style={{ flex: 1 }}>
+          <h2>کامنت‌ها</h2>
           {users.slice(0, 4).map((user, idx) => (
-            <ActivityItem 
+            <ActivityItem
               key={idx}
               user={user.name}
               time="1 ساعت پیش"
@@ -212,21 +191,7 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
-
-      {/* ✅ تغییرات درخواستی: حذف کامل دایره‌های رنگی */}
-      {/* قسمت زیر کاملاً حذف شد:
-      <section style={styles.summarySection}>
-        <div style={styles.kpiSummary}>
-          <CircularProgress value={96} label="رضایت مشتری" color="#4CAF50" />
-          <CircularProgress value={80} label="درآمد" color="#2196F3" />
-          <CircularProgress value={85} label="نرخ تبدیل" color="#FFC107" />
-          <CircularProgress value={75} label="بهره‌وری" color="#E91E63" />
-        </div>
-        ...
-      </section>
-      */}
-
-      {/* مدل پنجره گزارش */}
+      {/* پنجره گزارش‌گیری */}
       {showExportOptions && (
         <div style={styles.exportModal}>
           <button onClick={exportToPDF} style={styles.modalButton}>خروجی PDF</button>
@@ -237,20 +202,21 @@ export default function Dashboard() {
   );
 }
 
-// مولفه‌های جدید
+// ✅ مولفه کارت KPI
 function KPICard({ title, value, icon, progress }) {
   return (
     <div style={styles.kpiCard}>
       <div style={styles.kpiIcon}>{icon}</div>
       <div style={styles.kpiContent}>
-        <h3 style={styles.kpiTitle}>{title}</h3>
-        <p style={styles.kpiValue}>{value}</p>
+        <h3>{title}</h3>
+        <p>{value}</p>
         <progress max="100" value={progress} style={styles.progressBar}></progress>
       </div>
     </div>
   );
 }
 
+// ✅ مولفه نمایش پیشرفت اهداف
 function GoalProgress({ goal, progress, date }) {
   return (
     <div style={styles.goalItem}>
@@ -263,24 +229,7 @@ function GoalProgress({ goal, progress, date }) {
   );
 }
 
-function ActionItem({ title, responsible, status }) {
-  const statusColors = {
-    pending: "#ffcc00",
-    "in-progress": "#2196f3",
-    completed: "#4caf50",
-    delayed: "#f44336"
-  };
-  return (
-    <div style={styles.actionItem}>
-      <div style={{ ...styles.statusDot, backgroundColor: statusColors[status] }}></div>
-      <div style={styles.actionInfo}>
-        <p>{title}</p>
-        <small>مسئول: {responsible}</small>
-      </div>
-    </div>
-  );
-}
-
+// ✅ مولفه نمایش آیتم‌های فعالیت
 function ActivityItem({ user, time, message }) {
   return (
     <div style={styles.activityItem}>
@@ -293,6 +242,7 @@ function ActivityItem({ user, time, message }) {
   );
 }
 
+// ✅ مولفه فیلترها
 function Filter({ label, value, onChange, options }) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
