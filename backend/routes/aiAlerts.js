@@ -16,39 +16,33 @@ router.get('/goals/alerts', async (req, res) => {
       return res.json({ alerts: "✅ همه اهداف سازمانی در وضعیت مناسبی هستند." });
     }
 
-    // اگر AI فعال باشد
     if (useAI) {
       const openaiResponse = await axios.post(
-        'https://api.openai.com/v1/chat/completions ', // ✅ حذف space اضافی
+        'https://api.openai.com/v1/chat/completions',
         {
           model: 'gpt-4-turbo',
-          messages: [{
-            role: 'system',
-            content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف سازمانی با عملکرد پایین ارائه می‌دهد.'
-          }, {
-            role: 'user',
-            content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`
-          }]
+          messages: [
+            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف سازمانی با عملکرد پایین ارائه می‌دهد.' },
+            { role: 'user', content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}` }
+          ]
         },
         {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           },
-          timeout: 10000 // ✅ افزودن timeout 10 ثانیه
+          timeout: 10000
         }
       );
-
       return res.json({ alerts: openaiResponse.data.choices[0].message.content });
     }
 
-    // اگر AI غیرفعال باشد
     const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
     res.json({ alerts: message });
 
   } catch (error) {
-    console.error("❌ خطای داخلی در /goals/alerts:", error.message); // ✅ لاگ خطا
-    res.status(500).json({ error: "خطای داخلی سرور" }); // ✅ پاسخ واضح به کلاینت
+    console.error("❌ خطای داخلی در /goals/alerts:", error.message);
+    res.status(500).json({ error: "خطای داخلی سرور" });
   }
 });
 
@@ -65,26 +59,22 @@ router.get('/department-goals/alerts', async (req, res) => {
 
     if (useAI) {
       const openaiResponse = await axios.post(
-        'https://api.openai.com/v1/chat/completions ', // ✅ حذف space اضافی
+        'https://api.openai.com/v1/chat/completions',
         {
           model: 'gpt-4-turbo',
-          messages: [{
-            role: 'system',
-            content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف دپارتمانی با عملکرد پایین ارائه می‌دهد.'
-          }, {
-            role: 'user',
-            content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`
-          }]
+          messages: [
+            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف دپارتمانی با عملکرد پایین ارائه می‌دهد.' },
+            { role: 'user', content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}` }
+          ]
         },
         {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           },
-          timeout: 10000 // ✅ افزودن timeout 10 ثانیه
+          timeout: 10000
         }
       );
-
       return res.json({ alerts: openaiResponse.data.choices[0].message.content });
     }
 
@@ -92,8 +82,8 @@ router.get('/department-goals/alerts', async (req, res) => {
     res.json({ alerts: message });
 
   } catch (error) {
-    console.error("❌ خطای داخلی در /department-goals/alerts:", error.message); // ✅ لاگ خطا
-    res.status(500).json({ error: "خطای داخلی سرور" }); // ✅ پاسخ واضح به کلاینت
+    console.error("❌ خطای داخلی در /department-goals/alerts:", error.message);
+    res.status(500).json({ error: "خطای داخلی سرور" });
   }
 });
 
