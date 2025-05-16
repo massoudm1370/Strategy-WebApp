@@ -4,10 +4,9 @@ const axios = require('axios');
 require('dotenv').config();
 console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
 
-// کنترل فعال یا غیرفعال بودن ChatGPT از طریق متغیر محیطی
 const useAI = process.env.USE_AI_ALERTS === 'true';
 
-// مسیر هشدار اهداف سازمانی
+// 📌 مسیر هشدار اهداف سازمانی
 router.get('/goals/alerts', async (req, res) => {
   try {
     const db = req.db;
@@ -24,14 +23,14 @@ router.get('/goals/alerts', async (req, res) => {
         {
           model: 'gpt-4-turbo',
           messages: [
-            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف سازمانی با عملکرد پایین ارائه می‌دهد.' },
+            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید.' },
             { role: 'user', content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}` }
           ]
         },
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
           },
           timeout: 10000
         }
@@ -48,7 +47,7 @@ router.get('/goals/alerts', async (req, res) => {
   }
 });
 
-// مسیر هشدار اهداف دپارتمانی
+// 📌 مسیر هشدار اهداف دپارتمانی
 router.get('/department-goals/alerts', async (req, res) => {
   try {
     const db = req.db;
@@ -65,14 +64,14 @@ router.get('/department-goals/alerts', async (req, res) => {
         {
           model: 'gpt-4-turbo',
           messages: [
-            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف دپارتمانی با عملکرد پایین ارائه می‌دهد.' },
+            { role: 'system', content: 'شما یک دستیار مدیریت استراتژیک هستید.' },
             { role: 'user', content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}` }
           ]
         },
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
           },
           timeout: 10000
         }
@@ -88,11 +87,29 @@ router.get('/department-goals/alerts', async (req, res) => {
     res.status(500).json({ error: "خطای داخلی سرور" });
   }
 });
-router.get('/test-api-key', async (req, res) => {
-  if (process.env.OPENAI_API_KEY) {
-    res.json({ status: "✅ OPENAI_API_KEY is loaded and available." });
-  } else {
-    res.status(500).json({ status: "❌ OPENAI_API_KEY is not loaded." });
+
+// 📌 مسیر تست مستقیم OpenAI
+router.get('/test-openai', async (req, res) => {
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4-turbo',
+        messages: [{ role: 'user', content: 'Hello from DigiExpress' }]
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        timeout: 10000
+      }
+    );
+
+    res.json({ reply: response.data.choices[0].message.content });
+  } catch (error) {
+    console.error("❌ Error contacting OpenAI:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
