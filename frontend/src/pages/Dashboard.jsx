@@ -178,10 +178,10 @@ export default function Dashboard() {
       </div>
 
       <section style={styles.kpiSection}>
-        <KPICard title="تعداد کاربران" value={`${users.length}`} icon="👥" progress={100} />
-        <KPICard title="تعداد Key Result های ثبت‌شده" value={`${departmentGoals.length}`} icon="✅" progress={100} />
-        <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯" progress={100} />
-        <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" progress={100} />
+        <KPICard title="تعداد کاربران" value={`${users.length}`} icon="👥"/>
+        <KPICard title="تعداد Key Result های ثبت‌شده" value={`${departmentGoals.length}`} icon="✅"/>
+        <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯"/>
+        <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" />
       </section>
 
       <table style={styles.departmentTable}>
