@@ -1,6 +1,5 @@
 import moment from 'jalali-moment';
 import { useState, useEffect } from "react";
-
 export default function OrganizationalGoalsManagement() {
   // States
   const [goals, setGoals] = useState([]);
@@ -19,19 +18,15 @@ export default function OrganizationalGoalsManagement() {
   });
   const [filterBySuccess, setFilterBySuccess] = useState("all");
   const baseUrl = process.env.REACT_APP_API_URL;
-
   // States for editing
   const [isEditing, setIsEditing] = useState(false);
   const [editingGoalId, setEditingGoalId] = useState(null);
-
   // States for KPI repository
   const [kpiList, setKpiList] = useState([]);
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [loadingKpi, setLoadingKpi] = useState(false);
-
   // ✅ افزودن وضعیت جدید برای ردیابی تغییرات دستی عنوان
   const [isTitleManual, setIsTitleManual] = useState(false);
-
   // Load data from API on mount
   useEffect(() => {
     // Load organizational goals
@@ -42,7 +37,6 @@ export default function OrganizationalGoalsManagement() {
         console.error('❌ خطا در دریافت اهداف از سرور:', error);
         setGoals([]);
       });
-
     // Load KPI repository
     const fetchKpiList = async () => {
       setLoadingKpi(true);
@@ -58,23 +52,19 @@ export default function OrganizationalGoalsManagement() {
     };
     fetchKpiList();
   }, []);
-
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewGoal(prev => ({ ...prev, [name]: value }));
-    
     // ✅ اگر عنوان ویرایش شود، وضعیت دستی تنظیم می‌شود
     if (name === "title") {
       setIsTitleManual(true);
     }
   };
-
   // Calculate YTD automatically from currentStatus if not manually entered
   const calculateAutoYTD = (currentStatus) => {
     return currentStatus || "";
   };
-
   // Calculate success percentage using YTD if available
   const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
     const valueToUse = ytdValue || currentStatus;
@@ -83,10 +73,8 @@ export default function OrganizationalGoalsManagement() {
     const targetNum = parseFloat(target);
     const failureNum = parseFloat(failure);
     if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
-    
     const range = Math.max(Math.abs(targetNum - failureNum), 0);
     if (range === 0) return 0;
-    
     let progress = 0;
     if (targetNum > failureNum) {
       if (valueNum <= failureNum) return 0;
@@ -97,38 +85,32 @@ export default function OrganizationalGoalsManagement() {
       if (valueNum <= targetNum) return 100;
       progress = failureNum - valueNum;
     }
-    
     const percentage = (progress / range) * 100;
     return Math.max(0, Math.min(percentage, 100));
   };
-
   // Handle add/edit goal
 const handleSaveGoal = () => {
   const requiredFields = [
-    { name: "عنوان", value: newGoal.title },
-    { name: "تارگت", value: newGoal.target },
-    { name: "عدم دستیابی", value: newGoal.failure },
-    { name: "وضعیت موجود", value: newGoal.currentStatus },
-    { name: "سال", value: newGoal.year },
-    { name: "نیمسال", value: newGoal.half },
-    { name: "وزن", value: newGoal.weight },
+    { name: "عنوان *", value: newGoal.title },
+    { name: "تارگت *", value: newGoal.target },
+    { name: "عدم دستیابی *", value: newGoal.failure },
+    { name: "وضعیت موجود *", value: newGoal.currentStatus },
+    { name: "سال *", value: newGoal.year },
+    { name: "نیمسال *", value: newGoal.half },
+    { name: "وزن *", value: newGoal.weight },
   ];
-
   const missingField = requiredFields.find(f => !f.value || f.value.toString().trim() === "");
   if (missingField) {
-    alert(`لطفاً ${missingField.name} را وارد نمایید.`);
+    alert(`لطفاً ${missingField.name.replace("*", "").trim()} را وارد نمایید.`);
     return;
   }
-
   const weightValue = parseFloat(newGoal.weight) || 0;
   const totalWeight = goals.reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
-
   if (isEditing) {
     if (totalWeight - (goals.find(g => g.id === editingGoalId)?.weight || 0) + weightValue > 100) {
       alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
       return;
     }
-
     fetch(`${baseUrl}/goals/${editingGoalId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -154,7 +136,6 @@ const handleSaveGoal = () => {
       alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
       return;
     }
-
     fetch(`${baseUrl}/goals`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -175,8 +156,6 @@ const handleSaveGoal = () => {
       });
   }
 };
-
-
   // Reset form
   const resetForm = () => {
     setNewGoal({
@@ -197,11 +176,9 @@ const handleSaveGoal = () => {
     setSelectedKpi(null);
     setIsTitleManual(false); // ✅ بازنشانی وضعیت دستی
   };
-
   // Delete goal
   const handleDelete = (goalId) => {
     if (!window.confirm("آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟")) return;
-    
     fetch(`${baseUrl}/goals/${goalId}`, { method: 'DELETE' })
       .then(res => res.json())
       .then(result => {
@@ -218,7 +195,6 @@ const handleSaveGoal = () => {
         alert('خطا در برقراری ارتباط با سرور');
       });
   };
-
   // Edit goal
   const handleEdit = (goalId) => {
     const goalToEdit = goals.find(goal => goal.id === goalId);
@@ -227,7 +203,6 @@ const handleSaveGoal = () => {
     setIsEditing(true);
     setEditingGoalId(goalId);
   };
-
   // Handle KPI selection
   useEffect(() => {
     if (selectedKpi && kpiList.length > 0) {
@@ -246,12 +221,10 @@ const handleSaveGoal = () => {
       }
     }
   }, [selectedKpi, kpiList, isTitleManual]); // ✅ وابستگی به isTitleManual
-
   // Progress bar component
   const ProgressBar = ({ percentage }) => {
     const color = percentage >= 80 ? '#28a745' : 
                   percentage >= 50 ? '#ffc107' : '#dc3545';
-    
     return (
       <div style={{ 
         width: '100%', 
@@ -271,7 +244,6 @@ const handleSaveGoal = () => {
       </div>
     );
   };
-
   // Filtered goals based on success percentage
   const filteredGoals = goals.filter(goal => {
     const successPercentage = calculateSuccessPercentage(
@@ -280,7 +252,6 @@ const handleSaveGoal = () => {
       goal.target,
       goal.failure
     );
-    
     switch (filterBySuccess) {
       case "low":
         return successPercentage < 40;
@@ -292,7 +263,6 @@ const handleSaveGoal = () => {
         return true;
     }
   });
-
   return (
     <div style={{ 
       padding: "20px", 
@@ -302,7 +272,6 @@ const handleSaveGoal = () => {
       margin: "0 auto"
     }}>
       <h1 style={{ textAlign: "center", marginBottom: "30px" }}>مدیریت اهداف سازمان</h1>
-      
       {/* Form Section */}
       <div style={{ 
         display: "grid", 
@@ -315,8 +284,7 @@ const handleSaveGoal = () => {
           border: "1px solid #e0e0e0", 
           borderRadius: "10px"
         }}>
-          <h2 style={{ marginBottom: "20px" }}>فرم ثبت هدف</h2>
-          
+          <h2 style={{ marginBottom: "20px" }}>{isEditing ? "فرم ویرایش هدف" : "فرم ثبت هدف"}</h2>
           {/* KPI Selection */}
           <div style={{ marginBottom: "15px" }}>
             <label>انتخاب هدف از مخزن:</label>
@@ -338,7 +306,6 @@ const handleSaveGoal = () => {
               ))}
             </select>
           </div>
-          
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <input 
               name="title"
@@ -353,7 +320,7 @@ const handleSaveGoal = () => {
             />
             <input 
               name="target"
-              placeholder="تارگت (عدد)"
+              placeholder="تارگت (عدد) *"
               value={newGoal.target}
               onChange={handleChange}
               style={{ 
@@ -364,7 +331,7 @@ const handleSaveGoal = () => {
             />
             <input 
               name="failure"
-              placeholder="عدم دستیابی (عدد)"
+              placeholder="عدم دستیابی (عدد) *"
               value={newGoal.failure}
               onChange={handleChange}
               style={{ 
@@ -375,7 +342,7 @@ const handleSaveGoal = () => {
             />
             <input 
               name="currentStatus"
-              placeholder="وضعیت موجود (عدد)"
+              placeholder="وضعیت موجود (عدد) *"
               value={newGoal.currentStatus}
               onChange={handleChange}
               style={{ 
@@ -420,8 +387,8 @@ const handleSaveGoal = () => {
                   borderRadius: "5px"
                 }}
               >
-                <option value="H1">نیمسال اول</option>
-                <option value="H2">نیمسال دوم</option>
+                <option value="H1">نیمسال اول *</option>
+                <option value="H2">نیمسال دوم *</option>
               </select>
             </div>
             <input 
@@ -448,7 +415,7 @@ const handleSaveGoal = () => {
             />
             <input 
               name="weight"
-              placeholder="وزن از کل اهداف (%)"
+              placeholder="وزن از کل اهداف (%) *"
               value={newGoal.weight}
               onChange={handleChange}
               style={{ 
@@ -480,12 +447,11 @@ const handleSaveGoal = () => {
                 fontSize: "16px"
               }}
             >
-              {isEditing ? "به‌روزرسانی هدف" : "ذخیره هدف"}
+              {isEditing ? "ثبت ویرایش" : "ذخیره هدف"}
             </button>
           </div>
         </div>
       </div>
-      
       {/* Filter Section */}
       <div style={{ marginBottom: "20px", textAlign: "right" }}>
         <label htmlFor="successFilter" style={{ marginLeft: "10px" }}>فیلتر بر اساس وضعیت:</label>
@@ -506,7 +472,6 @@ const handleSaveGoal = () => {
           <option value="high">بالا (بیش از 80%)</option>
         </select>
       </div>
-      
       {/* Results Table */}
       <h2 style={{ marginTop: "40px", marginBottom: "20px" }}>لیست اهداف سازمان</h2>
       <div style={{ overflowX: "auto" }}>
@@ -548,7 +513,6 @@ const handleSaveGoal = () => {
                   goal.target,
                   goal.failure
                 );
-                
                 return (
                   <tr key={index}>
                     <td style={{ padding: "10px", border: "1px solid #ddd" }}>{goal.title}</td>

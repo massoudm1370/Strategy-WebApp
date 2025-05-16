@@ -2,40 +2,53 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
+// کنترل فعال یا غیرفعال بودن ChatGPT از طریق متغیر محیطی
+const useAI = process.env.USE_AI_ALERTS === 'true';
+
 // مسیر هشدار اهداف سازمانی
 router.get('/goals/alerts', async (req, res) => {
   try {
     const db = req.db;
-    const stmt = db.prepare("SELECT id, title, currentStatus AS successPercentage FROM goals WHERE currentStatus < 50");
+    const stmt = db.prepare("SELECT id, title, currentStatus FROM goals WHERE currentStatus < 50");
     const keyResults = stmt.all();
 
     if (!keyResults.length) {
       return res.json({ alerts: "✅ همه اهداف سازمانی در وضعیت مناسبی هستند." });
     }
 
-    const openaiResponse = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4-turbo',
-        messages: [{
-          role: 'system',
-          content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف سازمانی با عملکرد پایین ارائه می‌دهید.'
-        }, {
-          role: 'user',
-          content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.successPercentage}%`).join('\n')}`
-        }]
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    // اگر AI فعال باشد
+    if (useAI) {
+      const openaiResponse = await axios.post(
+        'https://api.openai.com/v1/chat/completions ', // ✅ حذف space اضافی
+        {
+          model: 'gpt-4-turbo',
+          messages: [{
+            role: 'system',
+            content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف سازمانی با عملکرد پایین ارائه می‌دهد.'
+          }, {
+            role: 'user',
+            content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`
+          }]
         },
-      }
-    );
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          },
+          timeout: 10000 // ✅ افزودن timeout 10 ثانیه
+        }
+      );
 
-    res.json({ alerts: openaiResponse.data.choices[0].message.content });
+      return res.json({ alerts: openaiResponse.data.choices[0].message.content });
+    }
+
+    // اگر AI غیرفعال باشد
+    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
+    res.json({ alerts: message });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("❌ خطای داخلی در /goals/alerts:", error.message); // ✅ لاگ خطا
+    res.status(500).json({ error: "خطای داخلی سرور" }); // ✅ پاسخ واضح به کلاینت
   }
 });
 
@@ -43,36 +56,44 @@ router.get('/goals/alerts', async (req, res) => {
 router.get('/department-goals/alerts', async (req, res) => {
   try {
     const db = req.db;
-    const stmt = db.prepare("SELECT id, keyResult AS title, finalAchievement AS successPercentage FROM department_goals WHERE finalAchievement < 50");
+    const stmt = db.prepare("SELECT id, keyResult, finalAchievement FROM department_goals WHERE finalAchievement < 50");
     const keyResults = stmt.all();
 
     if (!keyResults.length) {
       return res.json({ alerts: "✅ همه اهداف دپارتمانی در وضعیت مناسبی هستند." });
     }
 
-    const openaiResponse = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4-turbo',
-        messages: [{
-          role: 'system',
-          content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف دپارتمانی با عملکرد پایین ارائه می‌دهید.'
-        }, {
-          role: 'user',
-          content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.successPercentage}%`).join('\n')}`
-        }]
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    if (useAI) {
+      const openaiResponse = await axios.post(
+        'https://api.openai.com/v1/chat/completions ', // ✅ حذف space اضافی
+        {
+          model: 'gpt-4-turbo',
+          messages: [{
+            role: 'system',
+            content: 'شما یک دستیار مدیریت استراتژیک هستید که هشدارهایی برای اهداف دپارتمانی با عملکرد پایین ارائه می‌دهد.'
+          }, {
+            role: 'user',
+            content: `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`
+          }]
         },
-      }
-    );
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          },
+          timeout: 10000 // ✅ افزودن timeout 10 ثانیه
+        }
+      );
 
-    res.json({ alerts: openaiResponse.data.choices[0].message.content });
+      return res.json({ alerts: openaiResponse.data.choices[0].message.content });
+    }
+
+    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`;
+    res.json({ alerts: message });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("❌ خطای داخلی در /department-goals/alerts:", error.message); // ✅ لاگ خطا
+    res.status(500).json({ error: "خطای داخلی سرور" }); // ✅ پاسخ واضح به کلاینت
   }
 });
 

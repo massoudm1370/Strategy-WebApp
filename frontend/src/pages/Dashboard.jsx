@@ -9,15 +9,58 @@ import axios from "axios";
 const API_URL = process.env.REACT_APP_API_URL;
 
 // تعریف کامپوننت AIAlerts خارج از Dashboard
-const OrgGoalsAlerts = () => {
-  const [alerts, setAlerts] = useState("");
+const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
+  const valueToUse = ytdValue || currentStatus;
+  if (!valueToUse || !target || !failure) return 0;
+  const valueNum = parseFloat(valueToUse);
+  const targetNum = parseFloat(target);
+  const failureNum = parseFloat(failure);
+  if (isNaN(valueNum) || isNaN(targetNum) || isNaN(failureNum)) return 0;
+  const range = Math.max(Math.abs(targetNum - failureNum), 0);
+  if (range === 0) return 0;
+  let progress = 0;
+  if (targetNum > failureNum) {
+    if (valueNum <= failureNum) return 0;
+    if (valueNum >= targetNum) return 100;
+    progress = valueNum - failureNum;
+  } else {
+    if (valueNum >= failureNum) return 0;
+    if (valueNum <= targetNum) return 100;
+    progress = failureNum - valueNum;
+  }
+  const percentage = (progress / range) * 100;
+  return Math.max(0, Math.min(percentage, 100));
+};
+
+// تعریف کامپوننت AIAlerts خارج از Dashboard
+const OrgGoalsAlerts = ({ organizationalGoals }) => {
+  const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
-    axios
-      .get(`${process.env.REACT_APP_API_URL}/api/goals/alerts`)
-      .then((res) => setAlerts(res.data.alerts))
-      .catch((err) => console.error(err));
-  }, []);
+    const fetchAlerts = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/goals/alerts`);
+        const serverAlerts = res.data.alerts ? [res.data.alerts] : [];
+
+        // هشدارهای داخلی بر اساس درصد موفقیت
+        const lowPerformanceAlerts = organizationalGoals
+          .map(goal => {
+            const success = calculateSuccessPercentage(goal.ytd, goal.currentStatus, goal.target, goal.failure);
+            if (success < 50) {
+              return `هدف "${goal.title}" با درصد موفقیت ${success.toFixed(1)}% کمتر از 50% است.`;
+            }
+            return null;
+          })
+          .filter(alert => alert !== null);
+
+        setAlerts([...serverAlerts, ...lowPerformanceAlerts]);
+      } catch (err) {
+        console.error("❌ خطا در دریافت هشدارها:", err);
+      }
+    };
+
+    fetchAlerts();
+  }, [organizationalGoals]);
 
   return (
     <div
@@ -35,37 +78,15 @@ const OrgGoalsAlerts = () => {
       <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>
         ⚠️ هشدار عملکرد اهداف سازمانی
       </h3>
-      {alerts ? <p>{alerts}</p> : <p>هیچ هشداری وجود ندارد.</p>}
-    </div>
-  );
-};
-const DeptGoalsAlerts = () => {
-  const [alerts, setAlerts] = useState("");
-
-  useEffect(() => {
-    axios
-      .get(`${process.env.REACT_APP_API_URL}/api/department-goals/alerts`)
-      .then((res) => setAlerts(res.data.alerts))
-      .catch((err) => console.error(err));
-  }, []);
-
-  return (
-    <div
-      className="alert-card"
-      style={{
-        backgroundColor: "#FFF8E1",
-        border: "1px solid #FFD54F",
-        borderRadius: "8px",
-        padding: "15px",
-        marginTop: "20px",
-        direction: "rtl",
-        textAlign: "right",
-      }}
-    >
-      <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>
-        ⚠️ هشدار عملکرد اهداف دپارتمانی
-      </h3>
-      {alerts ? <p>{alerts}</p> : <p>هیچ هشداری وجود ندارد.</p>}
+      {alerts.length > 0 ? (
+        <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+          {alerts.map((alert, index) => (
+            <li key={index} style={{ marginBottom: "10px" }}>{alert}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>هیچ هشداری وجود ندارد.</p>
+      )}
     </div>
   );
 };
@@ -277,13 +298,10 @@ export default function Dashboard() {
 {/* بخش پیشرفت استراتژیک */}
 <div className="strategic-progress-section">
   <h2>پیشرفت وضعیت راهبردی اهداف سازمانی 🎯</h2>
-
-  {/* هشدار اهداف سازمانی */}
-  <OrgGoalsAlerts />
-
+  {/* هشدار اهداف سازمانی با هشدارهای داخلی */}
+  <OrgGoalsAlerts organizationalGoals={organizationalGoals} />
   {/* هشدار اهداف دپارتمانی */}
   <DeptGoalsAlerts />
-
   {/* ادامه محتوای قبلی این بخش */}
 </div>
 
