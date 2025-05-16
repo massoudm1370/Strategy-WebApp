@@ -1,5 +1,4 @@
-
-// استایل‌ها
+// DashboardStyles.js
 const styles = {
   container: {
     fontFamily: "Vazirmatn, sans-serif",
@@ -72,8 +71,9 @@ const styles = {
   },
   progressBar: {
     width: "100%",
-    height: "8px",
-    margin: "0.5rem 0"
+    height: "10px",
+    margin: "0.5rem 0",
+    backgroundColor: "#e0e0e0"
   },
   circularProgress: {
     position: "relative",
@@ -93,11 +93,6 @@ const styles = {
   goalItem: {
     margin: "1rem 0",
     position: "relative"
-  },
-  progressBar: {
-    height: "10px",
-    backgroundColor: "#e0e0e0",
-    marginBottom: "0.5rem"
   },
   actionItem: {
     display: "flex",
@@ -177,3 +172,5 @@ const styles = {
     cursor: "pointer"
   }
 };
+
+export default styles;
