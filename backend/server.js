@@ -1,7 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 const fs = require('fs');
 
 const app = express();
@@ -11,32 +12,21 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Database Setup
-const db = new sqlite3.Database('./strategy.db', (err) => {
-  if (err) {
-    console.error('❌ Database connection failed:', err.message);
-  } else {
-    console.log('📦 SQLite database connected.');
+// ✅ اتصال به دیتابیس از طریق db.js
+const db = require('./db');
 
-    if (fs.existsSync('./init.sql')) {
-      const initSQL = fs.readFileSync('./init.sql', 'utf-8');
-      db.exec(initSQL, (err) => {
-        if (err) console.error('❌ Database init failed:', err.message);
-        else console.log('✅ Database structure initialized.');
-      });
-    } else {
-      console.warn('⚠️ init.sql not found. Skipping database initialization.');
-    }
-  }
-});
+// Initialize Database Structure
+const initSQL = fs.readFileSync('./init.sql', 'utf-8');
+db.exec(initSQL);
+console.log('Database initialized.');
 
-// Make db accessible to routes
+// Make DB available to routers
 app.use((req, res, next) => {
-  req.db = db;
-  next();
+    req.db = db;
+    next();
 });
 
-// Import routes
+// Routes
 const goalsRoutes = require('./routes/goals');
 const usersRoutes = require('./routes/users');
 const departmentsRoutes = require('./routes/departments');
@@ -48,16 +38,20 @@ const messageRoutes = require('./routes/messages');
 const collaborationRoutes = require('./routes/collaboration');
 const aiAlertsRoutes = require('./routes/aiAlerts');
 
-// Register routes
+app.use('/api', aiAlertsRoutes);
+app.use('/uploads', express.static('uploads'));
 app.use('/api/collaboration', collaborationRoutes);
+app.use('/api/integrations', integrationsRoutes);
+app.use('/api/department-goals', departmentGoalsRoutes);
 app.use('/api/goals', goalsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/departments', departmentsRoutes);
 app.use('/api/strategy', strategyRoutes);
-app.use('/api/department-goals', departmentGoalsRoutes);
-app.use('/api/integrations', integrationsRoutes);
 app.use('/api/kpis', kpisRoutes); // ✅ اضافه شده
 app.use('/api/messages', messageRoutes);
-app.use('/api', aiAlertsRoutes);
+
 // Start Server
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log('HUGGINGFACE_API_KEY:', process.env.HUGGINGFACE_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
+});
