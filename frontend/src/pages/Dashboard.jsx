@@ -4,8 +4,6 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-
-
 const API_URL = process.env.REACT_APP_API_URL;
 
 // محاسبه درصد موفقیت
@@ -23,7 +21,7 @@ const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) =>
 };
 
 export default function Dashboard() {
-  // ... (حالت‌ها و useEffect‌های قبلی بدون تغییر)
+  // حالت‌ها
   const [strategyInfo, setStrategyInfo] = useState({ vision: "", mission: "", core_values: "" });
   const [organizationalGoals, setOrganizationalGoals] = useState([]);
   const [departmentGoals, setDepartmentGoals] = useState([]);
@@ -36,6 +34,7 @@ export default function Dashboard() {
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [selectedOrganizationalGoal, setSelectedOrganizationalGoal] = useState("");
 
+  // دریافت داده‌ها از API
   useEffect(() => {
     fetch(`${API_URL}/strategy`)
       .then(res => res.json())
@@ -54,12 +53,15 @@ export default function Dashboard() {
       .then(data => setUsers(data || []));
   }, []);
 
+  // فیلتر اهداف سازمانی
   const availableYears = [...new Set([...organizationalGoals.map(g => g.year), ...departmentGoals.map(kr => kr.year)])];
   const filteredOrganizationalGoals = organizationalGoals.filter(g => 
     (!filterYear || g.year === filterYear) && 
     (filterHalf === "همه" || g.halfYear === filterHalf) &&
     (filterDepartment === "همه" || g.department === filterDepartment)
   );
+
+  // اهداف مرتبط با دپارتمان‌ها
   const relatedDepartments = [...new Set(departmentGoals.filter(kr => kr.title === selectedOrganizationalGoal).map(kr => kr.department))];
   const relatedKeyResults = departmentGoals.filter(kr => kr.title === selectedOrganizationalGoal);
   const groupedKR = relatedKeyResults.reduce((acc, kr) => {
@@ -67,8 +69,8 @@ export default function Dashboard() {
     acc[kr.department].push(kr);
     return acc;
   }, {});
-  
-  // محاسبه وضعیت دپارتمان‌ها براساس درصد موفقیت
+
+  // محاسبه وضعیت دپارتمان‌ها
   const departmentSuccess = departmentGoals.reduce((acc, kr) => {
     if (!acc[kr.department]) acc[kr.department] = { total: 0, low: 0, medium: 0, high: 0 };
     const success = calculateSuccessPercentage(kr.ytd, kr.currentStatus, kr.target, kr.failure);
@@ -112,12 +114,8 @@ export default function Dashboard() {
 
   return (
     <div style={styles.container}>
-      {/* هدر با اطلاعات کاربری */}
+      {/* ✅ تغییرات درخواستی: حذف بخش مدیر راهبردی و عکس پروفایل */}
       <header style={styles.header}>
-        <div style={styles.userInfo}>
-          <span>مدیر راهبردی</span>
-          <img src="/avatar.png" alt="پروفایل" style={styles.avatar} />
-        </div>
         <div style={styles.actions}>
           <button onClick={() => setShowExportOptions(!showExportOptions)} style={styles.exportButton}>
             دریافت گزارش
@@ -137,52 +135,7 @@ export default function Dashboard() {
         }} options={organizationalGoals.map(g => g.title)} />
       </div>
 
-      {/* بخش KPI ها */}
-      <section style={styles.kpiSection}>
-        <KPICard title="همکاری تیمی" value="85%" icon="👥" progress={85} />
-        <KPICard title="اقدامات فعال" value="24" icon="✅" progress={60} />
-        <KPICard title="اهداف استراتژیک" value="12/15" icon="🎯" progress={80} />
-        <KPICard title="KPI تکمیل" value="76%" icon="📊" progress={76} />
-      </section>
-
-      {/* بخش خلاصه KPI ها */}
-      <section style={styles.summarySection}>
-        <div style={styles.kpiSummary}>
-          <CircularProgress value={96} label="رضایت مشتری" color="#4CAF50" />
-          <CircularProgress value={80} label="درآمد" color="#2196F3" />
-          <CircularProgress value={85} label="نرخ تبدیل" color="#FFC107" />
-          <CircularProgress value={75} label="بهره‌وری" color="#E91E63" />
-        </div>
-
-        <div style={styles.strategicGoals}>
-          <h2 style={styles.sectionTitle}>پیشرفت اهداف استراتژیک</h2>
-          <GoalProgress goal="افزایش سهم بازار" progress={85} date="1402/06/30" />
-          <GoalProgress goal="کاهش هزینه‌های عملیاتی" progress={60} date="1402/09/30" />
-          <GoalProgress goal="افزایش رضایت مشتریان" progress={45} date="1402/12/29" />
-          <GoalProgress goal="توسعه محصول جدید" progress={25} date="1402/11/30" />
-          <GoalProgress goal="بهبود فرآیندهای داخلی" progress={75} date="1402/08/30" />
-        </div>
-      </section>
-
-      {/* بخش اقدامات پیش رو */}
-      <section style={styles.actionSection}>
-        <div style={styles.actionList}>
-          <ActionItem title="بهروزرسانی گزارش پیشرفت استراتژی فصلی" responsible="مدیر استراتژی" status="pending" />
-          <ActionItem title="بررسی های بخش فروش KPI" responsible="مدیر فروش" status="in-progress" />
-          <ActionItem title="جلسه بررسی پیشرفت پروژه‌های استراتژیک" responsible="تیم مدیریت" status="completed" />
-          <ActionItem title="تهیه گزارش تحلیل رقبا" responsible="تیم بازاریابی" status="delayed" />
-          <ActionItem title="بازگری اهداف استراتژیک سهماهه" responsible="هیئت مدیره" status="pending" />
-        </div>
-
-        <div style={styles.activityLog}>
-          <ActivityItem user="علی محمدی" time="1 ساعت پیش" message="کامنت جدید در مورد پیشرفت پروژه بازاریابی دیجیتال اضافه کرد." />
-          <ActivityItem user="سارا رضا" time="3 ساعت پیش" message="افراد 'بهینه‌سازی فرآیند فروش' را تکمیل کرد." />
-          <ActivityItem user="سیستم" time="5 ساعت پیش" message="هشدار: 'نرخ تبدیل مشتریان' به زیر آستانه هدف رسیده است." />
-          <ActivityItem user="محمد کرمی" time="دیروز" message="گزارش جدید 'تحلیل بازار رقابتی' را بارگذاری کرد." />
-        </div>
-      </section>
-
-      {/* بخش اطلاعات استراتژیک */}
+      {/* ✅ تغییرات درخواستی: انتقال چشم‌انداز، ماموریت، ارزش‌ها بین فیلترها و کارتها */}
       <div style={styles.strategySection}>
         <div style={styles.strategyCard}>
           <h3 style={styles.cardTitle}>چشم‌انداز</h3>
@@ -198,31 +151,80 @@ export default function Dashboard() {
         </div>
       </div>
 
-// ✅ بخش جدول وضعیت دپارتمان‌ها جایگزین شود با:
-<table style={styles.departmentTable}>
-  <thead>
-    <tr style={{ backgroundColor: "#223F98", color: "white" }}>
-      <th style={{ padding: "12px", textAlign: "center" }}>دپارتمان</th>
-      <th style={{ padding: "12px", textAlign: "center" }}>کمتر از 40% (ریسک)</th>
-      <th style={{ padding: "12px", textAlign: "center" }}>40-80% (در حال انجام)</th>
-      <th style={{ padding: "12px", textAlign: "center" }}>بیش از 80% (تکمیل شده)</th>
-    </tr>
-  </thead>
-  <tbody>
-    {departments.map((dept) => {
-      const stats = departmentSuccess[dept.name] || { total: 0, low: 0, medium: 0, high: 0 };
-      return (
-        <tr key={dept.name}>
-          <td style={{ padding: "12px", border: "1px solid #ddd", textAlign: "center" }}>{dept.name}</td>
-          <td style={{ padding: "12px", border: "1px solid #ddd", color: "#f44336", textAlign: "center" }}>{stats.low}</td>
-          <td style={{ padding: "12px", border: "1px solid #ddd", color: "#ff9800", textAlign: "center" }}>{stats.medium}</td>
-          <td style={{ padding: "12px", border: "1px solid #ddd", color: "#4caf50", textAlign: "center" }}>{stats.high}</td>
-        </tr>
-      );
-    })}
-  </tbody>
-</table>
+      {/* بخش KPI ها */}
+      <section style={styles.kpiSection}>
+        <KPICard title="همکاری تیمی" value="85%" icon="👥" progress={85} />
+        <KPICard title="اقدامات فعال" value="24" icon="✅" progress={60} />
+        <KPICard title="اهداف استراتژیک" value="12/15" icon="🎯" progress={80} />
+        <KPICard title="KPI تکمیل" value="76%" icon="📊" progress={76} />
+      </section>
 
+      {/* ✅ تغییرات درخواستی: جدول وضعیت دپارتمان‌ها به زیر کارتها منتقل شود */}
+      <table style={styles.departmentTable}>
+        <thead>
+          <tr style={{ backgroundColor: "#223F98", color: "white" }}>
+            <th style={{ padding: "12px", textAlign: "center" }}>دپارتمان</th>
+            <th style={{ padding: "12px", textAlign: "center" }}>کمتر از 40% (ریسک)</th>
+            <th style={{ padding: "12px", textAlign: "center" }}>40-80% (در حال انجام)</th>
+            <th style={{ padding: "12px", textAlign: "center" }}>بیش از 80% (تکمیل شده)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {departments.map((dept) => {
+            const stats = departmentSuccess[dept.name] || { total: 0, low: 0, medium: 0, high: 0 };
+            return (
+              <tr key={dept.name}>
+                <td style={{ padding: "12px", border: "1px solid #ddd", textAlign: "center" }}>{dept.name}</td>
+                <td style={{ padding: "12px", border: "1px solid #ddd", color: "#f44336", textAlign: "center" }}>{stats.low}</td>
+                <td style={{ padding: "12px", border: "1px solid #ddd", color: "#ff9800", textAlign: "center" }}>{stats.medium}</td>
+                <td style={{ padding: "12px", border: "1px solid #ddd", color: "#4caf50", textAlign: "center" }}>{stats.high}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {/* ✅ تغییرات درخواستی: بخش پیشرفت اهداف و کامنت‌ها در دو باکس کنار هم */}
+      <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
+        {/* بخش پیشرفت اهداف سازمانی */}
+        <div style={{ flex: 1, ...styles.summarySection }}>
+          <h2 style={styles.sectionTitle}>پیشرفت اهداف استراتژیک</h2>
+          {filteredOrganizationalGoals.map(goal => (
+            <GoalProgress 
+              key={goal.id}
+              goal={goal.title}
+              progress={calculateSuccessPercentage(goal.ytd, goal.currentStatus, goal.target, goal.failure)}
+              date={goal.dueDate}
+            />
+          ))}
+        </div>
+
+        {/* بخش کامنت‌ها */}
+        <div style={{ flex: 1, ...styles.activityLog }}>
+          <h2 style={styles.sectionTitle}>کامنت‌ها</h2>
+          {users.slice(0, 4).map((user, idx) => (
+            <ActivityItem 
+              key={idx}
+              user={user.name}
+              time="1 ساعت پیش"
+              message={`کامنت جدیدی در مورد ${filteredOrganizationalGoals[idx]?.title || "هدف سازمانی"} اضافه کرد.`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* ✅ تغییرات درخواستی: حذف کامل دایره‌های رنگی */}
+      {/* قسمت زیر کاملاً حذف شد:
+      <section style={styles.summarySection}>
+        <div style={styles.kpiSummary}>
+          <CircularProgress value={96} label="رضایت مشتری" color="#4CAF50" />
+          <CircularProgress value={80} label="درآمد" color="#2196F3" />
+          <CircularProgress value={85} label="نرخ تبدیل" color="#FFC107" />
+          <CircularProgress value={75} label="بهره‌وری" color="#E91E63" />
+        </div>
+        ...
+      </section>
+      */}
 
       {/* مدل پنجره گزارش */}
       {showExportOptions && (
@@ -249,21 +251,6 @@ function KPICard({ title, value, icon, progress }) {
   );
 }
 
-function CircularProgress({ value, label, color }) {
-  return (
-    <div style={styles.circularProgress}>
-      <svg viewBox="0 0 100 100" style={{ width: '100px', height: '100px' }}>
-        <circle cx="50" cy="50" r="45" stroke={color} strokeWidth="10" fill="none" />
-        <circle cx="50" cy="50" r="45" stroke={color} strokeWidth="10" fill="none"
-          style={{ strokeDasharray: '282.743', strokeDashoffset: '282.743', transform: `rotate(-90deg)`, transformOrigin: '50% 50%' }}
-        />
-      </svg>
-      <div style={styles.circularLabel}>{label}</div>
-      <div style={styles.circularValue}>{value}%</div>
-    </div>
-  );
-}
-
 function GoalProgress({ goal, progress, date }) {
   return (
     <div style={styles.goalItem}>
@@ -283,7 +270,6 @@ function ActionItem({ title, responsible, status }) {
     completed: "#4caf50",
     delayed: "#f44336"
   };
-  
   return (
     <div style={styles.actionItem}>
       <div style={{ ...styles.statusDot, backgroundColor: statusColors[status] }}></div>
@@ -306,7 +292,7 @@ function ActivityItem({ user, time, message }) {
     </div>
   );
 }
-// ✅ تعریف کامپوننت Filter
+
 function Filter({ label, value, onChange, options }) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
