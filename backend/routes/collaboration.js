@@ -4,28 +4,32 @@ const CollaborationModel = require('../models/CollaborationModel');
 
 // دریافت همه یادداشت‌ها
 router.get('/', (req, res) => {
-  CollaborationModel.getAll((err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  try {
+    const notes = CollaborationModel.getAll();
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // افزودن یادداشت جدید
 router.post('/', (req, res) => {
-const note = {
-  ...req.body,
-  timestamp: new Date().toISOString(),
-  sender: "سیستم" // یا از توکن کاربر، یا مقدار دلخواه
-};
+  try {
+    const saved = CollaborationModel.add(req.body);
+    res.json(saved);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // حذف یادداشت
 router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  CollaborationModel.remove(id, (err) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    CollaborationModel.remove(req.params.id);
     res.json({ success: true });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

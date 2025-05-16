@@ -4,28 +4,32 @@ const MessageModel = require('../models/MessageModel');
 
 // دریافت همه پیام‌ها
 router.get('/', (req, res) => {
-  MessageModel.getAll((err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  try {
+    const messages = MessageModel.getAll();
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// ارسال پیام جدید
+// افزودن پیام جدید
 router.post('/', (req, res) => {
-  const message = req.body;
-  MessageModel.add(message, (err, saved) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    const saved = MessageModel.add(req.body);
     res.json(saved);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// علامت‌گذاری به عنوان خوانده شده
-router.put('/:id/read', (req, res) => {
-  const { id } = req.params;
-  MessageModel.markAsRead(id, (err) => {
-    if (err) return res.status(500).json({ error: err.message });
+// حذف پیام
+router.delete('/:id', (req, res) => {
+  try {
+    MessageModel.remove(req.params.id);
     res.json({ success: true });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

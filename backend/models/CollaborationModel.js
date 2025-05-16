@@ -1,20 +1,29 @@
 const db = require('../db');
 
-exports.getAll = (callback) => {
-  db.all('SELECT * FROM collaboration_notes ORDER BY createdAt DESC', [], callback);
+exports.getAll = () => {
+  try {
+    return db.prepare('SELECT * FROM collaboration_notes ORDER BY createdAt DESC').all();
+  } catch (error) {
+    throw error;
+  }
 };
 
-exports.add = (note, callback) => {
-  const { text, fileName, recipient, sender, timestamp } = note;
-  db.run(
-    'INSERT INTO collaboration_notes (text, fileName, recipient, sender, createdAt) VALUES (?, ?, ?, ?, ?)',
-    [text, fileName, recipient, sender, timestamp || new Date().toISOString()],
-    function (err) {
-      callback(err, { id: this.lastID, ...note });
-    }
-  );
+exports.add = (note) => {
+  const { text, fileName, recipient } = note;
+  try {
+    const stmt = db.prepare('INSERT INTO collaboration_notes (text, fileName, recipient, createdAt) VALUES (?, ?, ?, datetime("now"))');
+    const info = stmt.run(text, fileName, recipient);
+    return { id: info.lastInsertRowid, ...note };
+  } catch (error) {
+    throw error;
+  }
 };
 
-exports.remove = (id, callback) => {
-  db.run('DELETE FROM collaboration_notes WHERE id = ?', [id], callback);
+exports.remove = (id) => {
+  try {
+    const stmt = db.prepare('DELETE FROM collaboration_notes WHERE id = ?');
+    stmt.run(id);
+  } catch (error) {
+    throw error;
+  }
 };
