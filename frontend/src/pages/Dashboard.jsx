@@ -93,7 +93,7 @@ const OrgGoalsAlerts = ({ organizationalGoals }) => {
 
 
 // تابع محاسبه درصد موفقیت
-const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
+
   const valueToUse = ytdValue || currentStatus;
   if (!valueToUse || !target || !failure) return 0;
   const valueNum = parseFloat(valueToUse);
@@ -104,7 +104,7 @@ const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) =>
   if (valueNum >= targetNum) return 100;
   if (valueNum <= failureNum) return 0;
   return ((valueNum - failureNum) / (targetNum - failureNum)) * 100;
-};
+
 
 export default function Dashboard() {
   const [strategyInfo, setStrategyInfo] = useState({ vision: "", mission: "", core_values: "" });
