@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS integrations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   url TEXT NOT NULL
 );
+
 -- جدول پیام‌ها
 CREATE TABLE IF NOT EXISTS messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,10 +84,13 @@ CREATE TABLE IF NOT EXISTS messages (
   read INTEGER DEFAULT 0,
   createdAt TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- جدول یادداشت‌های همکاری
 CREATE TABLE IF NOT EXISTS collaboration_notes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   text TEXT,
   fileName TEXT,
   recipient TEXT,
+  sender TEXT,
   createdAt TEXT DEFAULT CURRENT_TIMESTAMP
 );

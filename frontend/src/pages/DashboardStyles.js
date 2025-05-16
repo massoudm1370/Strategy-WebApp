@@ -1,4 +1,3 @@
-// DashboardStyles.js
 const styles = {
   container: {
     fontFamily: "Vazirmatn, sans-serif",
@@ -24,13 +23,12 @@ const styles = {
     borderRadius: "50%",
     backgroundColor: "#ddd"
   },
-actions: {
-  position: "relative", // ✅ مرجع موقعیت‌یابی منو
-  display: "flex",
-  alignItems: "center",
-  gap: "10px"
-}
-
+  actions: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
   exportButton: {
     padding: "0.5rem 1rem",
     backgroundColor: "#223F98",
@@ -157,19 +155,17 @@ actions: {
     color: "#223F98",
     marginBottom: "1.5rem"
   },
-exportModal: {
-  position: "absolute",
-  top: "40px",  // ✅ تنظیم دقیق موقعیت زیر دکمه
-  right: "0",
-  background: "#fff",
-  border: "1px solid #ddd",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-  borderRadius: "4px",
-  zIndex: 1000,
-  padding: "10px"
-}
-
-,
+  exportModal: {
+    position: "absolute",
+    top: "40px",
+    right: "0",
+    background: "#fff",
+    border: "1px solid #ddd",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+    borderRadius: "4px",
+    zIndex: 1000,
+    padding: "10px"
+  },
   modalButton: {
     display: "block",
     width: "100%",

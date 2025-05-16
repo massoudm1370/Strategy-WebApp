@@ -7,7 +7,7 @@ import { saveAs } from "file-saver";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-// ✅ تابع محاسبه درصد موفقیت
+// تابع محاسبه درصد موفقیت
 const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
   const valueToUse = ytdValue || currentStatus;
   if (!valueToUse || !target || !failure) return 0;
@@ -22,30 +22,38 @@ const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) =>
 };
 
 export default function Dashboard() {
-  // ✅ تعریف حالت‌ها
   const [strategyInfo, setStrategyInfo] = useState({ vision: "", mission: "", core_values: "" });
   const [organizationalGoals, setOrganizationalGoals] = useState([]);
   const [departmentGoals, setDepartmentGoals] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
   const [kpiRepository, setKpiRepository] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [unreadMessages, setUnreadMessages] = useState([]);
+  const [showInbox, setShowInbox] = useState(false);
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [filterHalf, setFilterHalf] = useState("همه");
   const [filterDepartment, setFilterDepartment] = useState("");
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [selectedOrganizationalGoal, setSelectedOrganizationalGoal] = useState("");
-
-  // ✅ دریافت داده‌ها از API
   useEffect(() => {
-  fetch(`${API_URL}/strategy`).then(res => res.json()).then(data => setStrategyInfo(data || {}));
-  fetch(`${API_URL}/goals`).then(res => res.json()).then(data => setOrganizationalGoals(data || []));
-  fetch(`${API_URL}/department-goals`).then(res => res.json()).then(data => setDepartmentGoals(data || []));
+    fetch(`${API_URL}/strategy`).then(res => res.json()).then(setStrategyInfo);
+    fetch(`${API_URL}/goals`).then(res => res.json()).then(setOrganizationalGoals);
+    fetch(`${API_URL}/department-goals`).then(res => res.json()).then(setDepartmentGoals);
+    fetch(`${API_URL}/departments`).then(res => res.json()).then(setDepartments);
+    fetch(`${API_URL}/users`).then(res => res.json()).then(setUsers);
+    fetch(`${API_URL}/kpis`).then(res => res.json()).then(setKpiRepository);
 
-    fetch(`${API_URL}/departments`).then(res => res.json()).then(data => setDepartments(data || []));
-    fetch(`${API_URL}/users`).then(res => res.json()).then(data => setUsers(data || []));
-    fetch(`${API_URL}/kpis`).then(res => res.json()).then(data => setKpiRepository(data || []));
+    fetch(`${API_URL}/messages`)
+      .then(res => res.json())
+      .then(data => {
+        const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+        const userMessages = data.filter(msg => msg.recipient === loggedInUser?.name && !msg.read);
+        setMessages(data || []);
+        setUnreadMessages(userMessages || []);
+      });
   }, []);
-  // ✅ فیلتر اهداف سازمانی
+
   const availableYears = [...new Set([...organizationalGoals.map(g => g.year), ...departmentGoals.map(kr => kr.year)])];
   const filteredOrganizationalGoals = organizationalGoals.filter(g =>
     (!filterYear || g.year === filterYear) &&
@@ -53,24 +61,17 @@ export default function Dashboard() {
     (filterDepartment === "همه" || g.department === filterDepartment)
   );
 
-  // ✅ وضعیت موفقیت دپارتمان‌ها
-const departmentSuccess = departments.reduce((acc, dept) => {
-  const relatedGoals = departmentGoals.filter(kr => kr.department === dept.name);
-  acc[dept.name] = { total: relatedGoals.length, low: 0, medium: 0, high: 0 };
-
-  relatedGoals.forEach(kr => {
-    const success = calculateSuccessPercentage(kr.ytd, kr.currentStatus, kr.target, kr.failure);
-    if (success < 40) acc[dept.name].low += 1;
-    else if (success >= 40 && success < 80) acc[dept.name].medium += 1;
-    else if (success >= 80) acc[dept.name].high += 1;
-  });
-
-  return acc;
-}, {});
-
-
-
-  // ✅ تابع خروجی اکسل
+  const departmentSuccess = departments.reduce((acc, dept) => {
+    const relatedGoals = departmentGoals.filter(kr => kr.department === dept.name);
+    acc[dept.name] = { total: relatedGoals.length, low: 0, medium: 0, high: 0 };
+    relatedGoals.forEach(kr => {
+      const success = calculateSuccessPercentage(kr.ytd, kr.currentStatus, kr.target, kr.failure);
+      if (success < 40) acc[dept.name].low += 1;
+      else if (success >= 40 && success < 80) acc[dept.name].medium += 1;
+      else if (success >= 80) acc[dept.name].high += 1;
+    });
+    return acc;
+  }, {});
   const exportToExcel = () => {
     const summary = [
       { "چشم‌انداز": strategyInfo.vision },
@@ -88,7 +89,6 @@ const departmentSuccess = departments.reduce((acc, dept) => {
     setShowExportOptions(false);
   };
 
-  // ✅ تابع خروجی PDF
   const exportToPDF = () => {
     const input = document.getElementById("dashboard-content");
     html2canvas(input).then(canvas => {
@@ -101,17 +101,65 @@ const departmentSuccess = departments.reduce((acc, dept) => {
       setShowExportOptions(false);
     });
   };
+
   return (
     <div style={styles.container} id="dashboard-content">
-
-      {/* نوار بالا */}
       <header style={styles.header}>
         <div style={styles.actions}>
-          <button onClick={() => setShowExportOptions(!showExportOptions)} style={styles.exportButton}>دریافت گزارش</button>
+          <button onClick={() => setShowExportOptions(!showExportOptions)} style={styles.exportButton}>
+            دریافت گزارش
+          </button>
+          {showExportOptions && (
+            <div style={styles.exportModal}>
+              <button onClick={exportToPDF} style={styles.modalButton}>خروجی PDF</button>
+              <button onClick={exportToExcel} style={styles.modalButton}>خروجی Excel</button>
+            </div>
+          )}
           <input type="search" placeholder="جستجو..." style={styles.searchInput} />
+          <div style={{ position: "relative", marginLeft: "20px", cursor: "pointer" }} title="صندوق پیام‌ها">
+            <span onClick={() => setShowInbox(!showInbox)}>📨</span>
+            {unreadMessages.length > 0 && (
+              <span style={{
+                position: "absolute",
+                top: "-5px",
+                right: "-10px",
+                background: "red",
+                color: "white",
+                borderRadius: "50%",
+                padding: "2px 6px",
+                fontSize: "12px"
+              }}>
+                {unreadMessages.length}
+              </span>
+            )}
+            {showInbox && (
+              <div style={{
+                position: "absolute",
+                top: "30px",
+                right: "0",
+                background: "white",
+                border: "1px solid #ddd",
+                borderRadius: "5px",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                zIndex: 1000,
+                width: "300px",
+                maxHeight: "200px",
+                overflowY: "auto",
+                textAlign: "right",
+                padding: "10px"
+              }}>
+                {unreadMessages.length === 0 && <p>هیچ پیام جدیدی ندارید.</p>}
+                {unreadMessages.map((msg, idx) => (
+                  <div key={idx} style={{ borderBottom: "1px solid #eee", padding: "5px 0" }}>
+                    <strong>از: {msg.sender}</strong><br />
+                    {msg.text}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </header>
-
       {/* بخش چشم‌انداز، ماموریت و ارزش‌ها */}
       <div style={styles.strategySection}>
         <div style={styles.strategyCard}><h3>چشم‌انداز</h3><p>{strategyInfo.vision || "اطلاعاتی ثبت نشده است"}</p></div>
@@ -126,24 +174,12 @@ const departmentSuccess = departments.reduce((acc, dept) => {
         <Filter label="نیمسال" value={filterHalf} onChange={setFilterHalf} options={["همه", "H1", "H2"]} />
       </div>
 
-      {/* راهنمای KPI ها */}
-      <p style={{ marginTop: "20px", marginBottom: "10px", color: "#555", textAlign: "right" }}>
-        آمار زیر بر اساس آخرین اطلاعات کاربران، اهداف، Key Result ها و KPIهای ثبت‌شده در سیستم نمایش داده می‌شود.
-      </p>
-
-      {/* کارت‌های KPI */}
       <section style={styles.kpiSection}>
-        <KPICard title="تعداد کاربران" value={`${users.length}`} icon="👥" />
-        <KPICard title="تعداد Key Result های ثبت‌شده" value={`${departmentGoals.length}`} icon="✅"/>
-        <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯" />
-        <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" />
+        <KPICard title="تعداد کاربران" value={`${users.length}`} icon="👥" progress={100} />
+        <KPICard title="تعداد Key Result های ثبت‌شده" value={`${departmentGoals.length}`} icon="✅" progress={100} />
+        <KPICard title="تعداد اهداف سازمانی ثبت‌شده" value={`${organizationalGoals.length}`} icon="🎯" progress={100} />
+        <KPICard title="تعداد KPIهای ثبت‌شده در مخزن" value={`${kpiRepository.length}`} icon="📊" progress={100} />
       </section>
-      {/* راهنمای وضعیت دپارتمان‌ها */}
-      <p style={{ marginTop: "20px", marginBottom: "10px", color: "#555", textAlign: "right" }}>
-        وضعیت زیر براساس تعداد اهداف ثبت‌شده برای هر دپارتمان و درصد موفقیت آن‌ها محاسبه شده است.
-      </p>
-
-      {/* جدول وضعیت دپارتمان‌ها */}
       <table style={styles.departmentTable}>
         <thead>
           <tr style={{ backgroundColor: "#223F98", color: "white" }}>
@@ -168,53 +204,40 @@ const departmentSuccess = departments.reduce((acc, dept) => {
         </tbody>
       </table>
 
-      {/* بخش پیشرفت اهداف و کامنت‌ها */}
       <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-        {/* پیشرفت اهداف */}
         <div style={{ flex: 1 }}>
           <h2>پیشرفت اهداف استراتژیک</h2>
           {filteredOrganizationalGoals.map(goal => {
-          const progressPercent = Math.round(calculateSuccessPercentage(goal.ytd, goal.currentStatus, goal.target, goal.failure));
-           return (
-           <div key={goal.id} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}>
-            <strong>🎯 {goal.title}</strong>
-          <p>درصد موفقیت: {progressPercent}%</p>
-          </div>
-           );
+            const progressPercent = Math.round(calculateSuccessPercentage(goal.ytd, goal.currentStatus, goal.target, goal.failure));
+            return (
+              <div key={goal.id} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}>
+                <strong>🎯 {goal.title}</strong>
+                <p>درصد موفقیت: {progressPercent}%</p>
+              </div>
+            );
           })}
         </div>
-
-        {/* کامنت‌ها */}
         <div style={{ flex: 1 }}>
-          <h2>کامنت‌ها</h2>
-          {users.slice(0, 4).map((user, idx) => (
+          <h2>پیام‌های ارسالی</h2>
+          {messages.slice(-4).reverse().map((msg, idx) => (
             <ActivityItem
               key={idx}
-              user={user.name}
-              time="1 ساعت پیش"
-              message={`کامنت جدیدی در مورد ${filteredOrganizationalGoals[idx]?.title || "هدف سازمانی"} اضافه کرد.`}
+              user={`ارسال‌کننده: ${msg.sender || "نامشخص"}`}
+              time={`زمان ارسال: ${msg.createdAt || "نامشخص"}`}
+              message={`گیرنده: ${msg.recipient || "نامشخص"} - ${msg.text || ""}`}
             />
           ))}
         </div>
       </div>
-      {/* پنجره گزارش‌گیری */}
-      {showExportOptions && (
-<div style={styles.actions}>
-  <button onClick={() => setShowExportOptions(!showExportOptions)} style={styles.exportButton}>
-    دریافت گزارش
-  </button>
-  {showExportOptions && (
-    <div style={styles.exportModal}>
-      <button onClick={exportToPDF} style={styles.modalButton}>خروجی PDF</button>
-      <button onClick={exportToExcel} style={styles.modalButton}>خروجی Excel</button>
-    </div>
-  )}
-  <input type="search" placeholder="جستجو..." style={styles.searchInput} />
-</div>
-  );
-}
 
-// ✅ مولفه کارت KPI
+      {showExportOptions && (
+        <div style={styles.exportModal}>
+          <button onClick={exportToPDF} style={styles.modalButton}>خروجی PDF</button>
+          <button onClick={exportToExcel} style={styles.modalButton}>خروجی Excel</button>
+        </div>
+      )}
+    </div>
+  );
 function KPICard({ title, value, icon, progress }) {
   return (
     <div style={styles.kpiCard}>
@@ -228,7 +251,6 @@ function KPICard({ title, value, icon, progress }) {
   );
 }
 
-// ✅ مولفه نمایش پیشرفت اهداف
 function GoalProgress({ goal, progress, date }) {
   return (
     <div style={styles.goalItem}>
@@ -241,7 +263,6 @@ function GoalProgress({ goal, progress, date }) {
   );
 }
 
-// ✅ مولفه نمایش آیتم‌های فعالیت
 function ActivityItem({ user, time, message }) {
   return (
     <div style={styles.activityItem}>
@@ -254,7 +275,6 @@ function ActivityItem({ user, time, message }) {
   );
 }
 
-// ✅ مولفه فیلترها
 function Filter({ label, value, onChange, options }) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>

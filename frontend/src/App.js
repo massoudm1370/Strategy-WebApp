@@ -13,30 +13,37 @@ import OrganizationalGoalsManagement from "./pages/OrganizationalGoalsManagement
 import DepartmentGoalsManagement from "./pages/DepartmentGoalsManagement";
 import LoginPage from "./pages/LoginPage";
 
+function ProtectedLayout({ children }) {
+  return (
+    <div style={{ display: "flex", direction: "rtl" }}>
+      <Sidebar />
+      <main style={{ flex: 1, padding: "20px", marginRight: "240px" }}>
+        {children}
+      </main>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LoginPage />} />
-
-        <Route path="/*" element={
-          <div style={{ display: "flex", direction: "rtl" }}>
-            <Sidebar />
-            <main style={{ flex: 1, padding: "20px", marginRight: "240px" }}>
-              <Routes>
-                <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="strategy" element={<ProtectedRoute><StrategyDesign /></ProtectedRoute>} />
-                <Route path="kpi" element={<ProtectedRoute><KPIManagement /></ProtectedRoute>} />
-                <Route path="collaboration" element={<ProtectedRoute><Collaboration /></ProtectedRoute>} />
-                <Route path="users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-                <Route path="departments" element={<ProtectedRoute><DepartmentManagement /></ProtectedRoute>} />
-                <Route path="integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
-                <Route path="goals/organizational" element={<ProtectedRoute><OrganizationalGoalsManagement /></ProtectedRoute>} />
-                <Route path="goals/departmental" element={<ProtectedRoute><DepartmentGoalsManagement /></ProtectedRoute>} />
-              </Routes>
-            </main>
-          </div>
-        } />
+        <Route path="/*" element={<ProtectedRoute>
+          <ProtectedLayout>
+            <Routes>
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="strategy" element={<StrategyDesign />} />
+              <Route path="kpi" element={<KPIManagement />} />
+              <Route path="collaboration" element={<Collaboration />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="departments" element={<DepartmentManagement />} />
+              <Route path="integrations" element={<Integrations />} />
+              <Route path="goals/organizational" element={<OrganizationalGoalsManagement />} />
+              <Route path="goals/departmental" element={<DepartmentGoalsManagement />} />
+            </Routes>
+          </ProtectedLayout>
+        </ProtectedRoute>} />
       </Routes>
     </Router>
   );

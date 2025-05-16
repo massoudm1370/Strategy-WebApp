@@ -5,10 +5,10 @@ exports.getAll = (callback) => {
 };
 
 exports.add = (note, callback) => {
-  const { text, fileName, recipient } = note;
+  const { text, fileName, recipient, sender, timestamp } = note;
   db.run(
-    'INSERT INTO collaboration_notes (text, fileName, recipient, createdAt) VALUES (?, ?, ?, datetime("now"))',
-    [text, fileName, recipient],
+    'INSERT INTO collaboration_notes (text, fileName, recipient, sender, createdAt) VALUES (?, ?, ?, ?, ?)',
+    [text, fileName, recipient, sender, timestamp || new Date().toISOString()],
     function (err) {
       callback(err, { id: this.lastID, ...note });
     }

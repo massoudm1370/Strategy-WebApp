@@ -12,11 +12,11 @@ router.get('/', (req, res) => {
 
 // افزودن یادداشت جدید
 router.post('/', (req, res) => {
-  const note = req.body;
-  CollaborationModel.add(note, (err, saved) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(saved);
-  });
+const note = {
+  ...req.body,
+  timestamp: new Date().toISOString(),
+  sender: "سیستم" // یا از توکن کاربر، یا مقدار دلخواه
+};
 });
 
 // حذف یادداشت
