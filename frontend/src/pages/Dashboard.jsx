@@ -4,8 +4,43 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL;
+
+// تعریف کامپوننت AIAlerts خارج از Dashboard
+const AIAlerts = () => {
+  const [alerts, setAlerts] = useState("");
+
+  useEffect(() => {
+    axios
+      .get(`${process.env.REACT_APP_API_URL}/api/keyresults/alerts`)
+      .then((res) => {
+        setAlerts(res.data.alerts);
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
+  return (
+    <div
+      className="alert-card"
+      style={{
+        backgroundColor: "#FFF8E1",
+        border: "1px solid #FFD54F",
+        borderRadius: "8px",
+        padding: "15px",
+        marginTop: "20px",
+        direction: "rtl",
+        textAlign: "right",
+      }}
+    >
+      <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>
+        ⚠️ هشدار عملکرد اهداف
+      </h3>
+      {alerts ? <p>{alerts}</p> : <p>هیچ هشداری وجود ندارد.</p>}
+    </div>
+  );
+};
 
 // تابع محاسبه درصد موفقیت
 const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
@@ -210,16 +245,15 @@ export default function Dashboard() {
 
       <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
         <div style={{ flex: 1 }}>
-          <h2>پیشرفت اهداف استراتژیک</h2>
-          {filteredOrganizationalGoals.map(goal => {
-            const progressPercent = Math.round(calculateSuccessPercentage(goal.ytd, goal.currentStatus, goal.target, goal.failure));
-            return (
-              <div key={goal.id} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}>
-                <strong>🎯 {goal.title}</strong>
-                <p>درصد موفقیت: {progressPercent}%</p>
-              </div>
-            );
-          })}
+{/* بخش پیشرفت استراتژیک */}
+<div className="strategic-progress-section">
+  <h2>پیشرفت وضعیت راهبردی اهداف سازمانی 🎯</h2>
+
+  <AIAlerts />
+
+  {/* ادامه محتوای قبلی این بخش */}
+</div>
+
         </div>
         <div style={{ flex: 1 }}>
           <h2>پیام‌های ارسالی</h2>

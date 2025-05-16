@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -35,9 +36,9 @@ const integrationsRoutes = require('./routes/integrations');
 const kpisRoutes = require('./routes/kpis'); // ✅ اضافه شده
 const messageRoutes = require('./routes/messages');
 const collaborationRoutes = require('./routes/collaboration');
+const aiAlertsRoutes = require('./routes/aiAlerts');
 
-
-
+app.use('/api', aiAlertsRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/collaboration', collaborationRoutes);
 app.use('/api/integrations', integrationsRoutes);
