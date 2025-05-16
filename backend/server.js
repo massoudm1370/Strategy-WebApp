@@ -45,7 +45,11 @@ const departmentGoalsRoutes = require('./routes/departmentGoals');
 const integrationsRoutes = require('./routes/integrations');
 const kpisRoutes = require('./routes/kpis'); // ✅ اضافه شده
 const messageRoutes = require('./routes/messages');
+const collaborationRoutes = require('./routes/collaboration');
+
+
 // Register routes
+app.use('/api/collaboration', collaborationRoutes);
 app.use('/api/goals', goalsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/departments', departmentsRoutes);

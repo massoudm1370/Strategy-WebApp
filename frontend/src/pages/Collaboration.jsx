@@ -8,11 +8,12 @@ export default function Collaboration() {
   const [noteText, setNoteText] = useState("");
   const [file, setFile] = useState(null);
 
-  // گیرنده پیام و لیست دپارتمان‌ها
-  const [recipient, setRecipient] = useState("");
+  const [recipientDepartment, setRecipientDepartment] = useState("");
+  const [recipientUser, setRecipientUser] = useState("");
   const [departments, setDepartments] = useState([]);
+  const [users, setUsers] = useState([]);
 
-  // دریافت یادداشت‌ها و دپارتمان‌ها در بارگذاری اولیه صفحه
+  // دریافت یادداشت‌ها، دپارتمان‌ها و کاربران در بارگذاری اولیه صفحه
   useEffect(() => {
     fetch(`${API_URL}/collaboration`)
       .then((res) => res.json())
@@ -23,15 +24,22 @@ export default function Collaboration() {
       .then((res) => res.json())
       .then((data) => setDepartments(data || []))
       .catch((err) => console.error("خطا در دریافت دپارتمان‌ها:", err));
+
+    fetch(`${API_URL}/users`)
+      .then((res) => res.json())
+      .then((data) => setUsers(data || []))
+      .catch((err) => console.error("خطا در دریافت کاربران:", err));
   }, []);
 
   // افزودن یادداشت جدید
   const handleAddNote = () => {
     if (!noteText.trim() && !file) return;
-    if (!recipient) {
-      alert("لطفاً یک گیرنده را انتخاب کنید.");
+    if (!recipientDepartment) {
+      alert("لطفاً یک دپارتمان را انتخاب کنید.");
       return;
     }
+
+    const recipient = recipientUser || recipientDepartment;
 
     const newNote = { text: noteText, fileName: file ? file.name : null, recipient };
 
@@ -45,7 +53,8 @@ export default function Collaboration() {
         setNotes([...notes, savedNote]);
         setNoteText("");
         setFile(null);
-        setRecipient("");
+        setRecipientDepartment("");
+        setRecipientUser("");
       })
       .catch((err) => console.error("خطا در ذخیره یادداشت:", err));
   };
@@ -65,13 +74,16 @@ export default function Collaboration() {
 
       {/* فرم افزودن یادداشت */}
       <div style={{ marginBottom: "20px", background: "white", padding: "20px", borderRadius: "8px" }}>
+        {/* انتخاب دپارتمان */}
         <select
-          value={recipient}
-          onChange={(e) => setRecipient(e.target.value)}
+          value={recipientDepartment}
+          onChange={(e) => {
+            setRecipientDepartment(e.target.value);
+            setRecipientUser("");
+          }}
           style={{ width: "95%", padding: "12px", margin: "5px 0 15px", border: "1px solid #ddd", borderRadius: "6px" }}
         >
-          <option value="">انتخاب گیرنده</option>
-          <option value="مدیر سیستم">مدیر سیستم</option>
+          <option value="">انتخاب دپارتمان</option>
           {departments.map((dept) => (
             <option key={dept.id} value={dept.name}>
               مدیر {dept.name}
@@ -79,17 +91,38 @@ export default function Collaboration() {
           ))}
         </select>
 
+        {/* انتخاب کاربر */}
+        {recipientDepartment && (
+          <select
+            value={recipientUser}
+            onChange={(e) => setRecipientUser(e.target.value)}
+            style={{ width: "95%", padding: "12px", margin: "5px 0 15px", border: "1px solid #ddd", borderRadius: "6px" }}
+          >
+            <option value="">تمام کاربران {recipientDepartment}</option>
+            {users
+              .filter(user => user.department === recipientDepartment)
+              .map(user => (
+                <option key={user.id} value={user.name}>{user.name}</option>
+              ))}
+          </select>
+        )}
+
+        {/* یادداشت */}
         <textarea
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
           placeholder="یادداشت خود را بنویسید..."
           style={{ width: "95%", padding: "12px", margin: "5px 0 15px", border: "1px solid #ddd", borderRadius: "6px", minHeight: "80px" }}
         />
+
+        {/* فایل */}
         <input
           type="file"
           onChange={(e) => setFile(e.target.files[0])}
           style={{ width: "95%", padding: "12px", margin: "5px 0 15px", border: "1px solid #ddd", borderRadius: "6px" }}
         />
+
+        {/* دکمه ارسال */}
         <button
           onClick={handleAddNote}
           style={{ padding: "12px 24px", backgroundColor: "#223F98", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" }}
