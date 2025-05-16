@@ -24,10 +24,13 @@ const styles = {
     borderRadius: "50%",
     backgroundColor: "#ddd"
   },
-  actions: {
-    display: "flex",
-    gap: "1rem"
-  },
+actions: {
+  position: "relative", // ✅ مرجع موقعیت‌یابی منو
+  display: "flex",
+  alignItems: "center",
+  gap: "10px"
+}
+
   exportButton: {
     padding: "0.5rem 1rem",
     backgroundColor: "#223F98",
@@ -155,9 +158,9 @@ const styles = {
     marginBottom: "1.5rem"
   },
 exportModal: {
-  position: "absolute",  // ✅ نمایش زیر دکمه
-  top: "50px",           // ✅ فاصله از بالا (متناسب با موقعیت دکمه تنظیم کنید)
-  right: "10px",         // ✅ چسبیده به سمت راست دکمه
+  position: "absolute",
+  top: "40px",  // ✅ تنظیم دقیق موقعیت زیر دکمه
+  right: "0",
   background: "#fff",
   border: "1px solid #ddd",
   boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
@@ -165,6 +168,7 @@ exportModal: {
   zIndex: 1000,
   padding: "10px"
 }
+
 ,
   modalButton: {
     display: "block",
