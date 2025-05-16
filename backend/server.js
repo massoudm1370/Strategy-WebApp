@@ -46,7 +46,7 @@ const integrationsRoutes = require('./routes/integrations');
 const kpisRoutes = require('./routes/kpis'); // ✅ اضافه شده
 const messageRoutes = require('./routes/messages');
 const collaborationRoutes = require('./routes/collaboration');
-
+const aiAlertsRoutes = require('./routes/aiAlerts');
 
 // Register routes
 app.use('/api/collaboration', collaborationRoutes);
@@ -58,5 +58,6 @@ app.use('/api/department-goals', departmentGoalsRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/kpis', kpisRoutes); // ✅ اضافه شده
 app.use('/api/messages', messageRoutes);
+app.use('/api', aiAlertsRoutes);
 // Start Server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

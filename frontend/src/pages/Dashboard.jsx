@@ -9,15 +9,13 @@ import axios from "axios";
 const API_URL = process.env.REACT_APP_API_URL;
 
 // تعریف کامپوننت AIAlerts خارج از Dashboard
-const AIAlerts = () => {
+const OrgGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/keyresults/alerts`)
-      .then((res) => {
-        setAlerts(res.data.alerts);
-      })
+      .get(`${process.env.REACT_APP_API_URL}/api/goals/alerts`)
+      .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err));
   }, []);
 
@@ -35,12 +33,43 @@ const AIAlerts = () => {
       }}
     >
       <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>
-        ⚠️ هشدار عملکرد اهداف
+        ⚠️ هشدار عملکرد اهداف سازمانی
       </h3>
       {alerts ? <p>{alerts}</p> : <p>هیچ هشداری وجود ندارد.</p>}
     </div>
   );
 };
+const DeptGoalsAlerts = () => {
+  const [alerts, setAlerts] = useState("");
+
+  useEffect(() => {
+    axios
+      .get(`${process.env.REACT_APP_API_URL}/api/department-goals/alerts`)
+      .then((res) => setAlerts(res.data.alerts))
+      .catch((err) => console.error(err));
+  }, []);
+
+  return (
+    <div
+      className="alert-card"
+      style={{
+        backgroundColor: "#FFF8E1",
+        border: "1px solid #FFD54F",
+        borderRadius: "8px",
+        padding: "15px",
+        marginTop: "20px",
+        direction: "rtl",
+        textAlign: "right",
+      }}
+    >
+      <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>
+        ⚠️ هشدار عملکرد اهداف دپارتمانی
+      </h3>
+      {alerts ? <p>{alerts}</p> : <p>هیچ هشداری وجود ندارد.</p>}
+    </div>
+  );
+};
+
 
 // تابع محاسبه درصد موفقیت
 const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
@@ -249,10 +278,15 @@ export default function Dashboard() {
 <div className="strategic-progress-section">
   <h2>پیشرفت وضعیت راهبردی اهداف سازمانی 🎯</h2>
 
-  <AIAlerts />
+  {/* هشدار اهداف سازمانی */}
+  <OrgGoalsAlerts />
+
+  {/* هشدار اهداف دپارتمانی */}
+  <DeptGoalsAlerts />
 
   {/* ادامه محتوای قبلی این بخش */}
 </div>
+
 
         </div>
         <div style={{ flex: 1 }}>

@@ -103,62 +103,79 @@ export default function OrganizationalGoalsManagement() {
   };
 
   // Handle add/edit goal
-  const handleSaveGoal = () => {
-    const weightValue = parseFloat(newGoal.weight) || 0;
-    const totalWeight = goals.reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
-    
-    if (isEditing) {
-      if (totalWeight - (goals.find(g => g.id === editingGoalId)?.weight || 0) + weightValue > 100) {
-        alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
-        return;
-      }
-      
-      fetch(`${baseUrl}/goals/${editingGoalId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newGoal)
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('خطا در ذخیره در سرور');
-          return res.json();
-        })
-        .then(updatedGoal => {
-          const updatedGoals = goals.map(goal => 
-            goal.id === editingGoalId ? updatedGoal : goal
-          );
-          setGoals(updatedGoals);
-          resetForm();
-        })
-        .catch(err => {
-          console.error('❌ خطا در به‌روزرسانی هدف:', err);
-          alert('خطا در ذخیره در سرور');
-        });
-    } else {
-      if (totalWeight + weightValue > 100) {
-        alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
-        return;
-      }
-      
-      fetch(`${baseUrl}/goals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newGoal)
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('خطا در ذخیره در سرور');
-          return res.json();
-        })
-        .then(savedGoal => {
-          const updatedGoals = [...goals, savedGoal];
-          setGoals(updatedGoals);
-          resetForm();
-        })
-        .catch(err => {
-          console.error('❌ خطا در ذخیره هدف:', err);
-          alert('خطا در ذخیره در سرور');
-        });
+const handleSaveGoal = () => {
+  const requiredFields = [
+    { name: "عنوان", value: newGoal.title },
+    { name: "تارگت", value: newGoal.target },
+    { name: "عدم دستیابی", value: newGoal.failure },
+    { name: "وضعیت موجود", value: newGoal.currentStatus },
+    { name: "سال", value: newGoal.year },
+    { name: "نیمسال", value: newGoal.half },
+    { name: "وزن", value: newGoal.weight },
+  ];
+
+  const missingField = requiredFields.find(f => !f.value || f.value.toString().trim() === "");
+  if (missingField) {
+    alert(`لطفاً ${missingField.name} را وارد نمایید.`);
+    return;
+  }
+
+  const weightValue = parseFloat(newGoal.weight) || 0;
+  const totalWeight = goals.reduce((sum, goal) => sum + (parseFloat(goal.weight) || 0), 0);
+
+  if (isEditing) {
+    if (totalWeight - (goals.find(g => g.id === editingGoalId)?.weight || 0) + weightValue > 100) {
+      alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
+      return;
     }
-  };
+
+    fetch(`${baseUrl}/goals/${editingGoalId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGoal)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('خطا در ذخیره در سرور');
+        return res.json();
+      })
+      .then(updatedGoal => {
+        const updatedGoals = goals.map(goal =>
+          goal.id === editingGoalId ? updatedGoal : goal
+        );
+        setGoals(updatedGoals);
+        resetForm();
+      })
+      .catch(err => {
+        console.error('❌ خطا در به‌روزرسانی هدف:', err);
+        alert('خطا در ذخیره در سرور');
+      });
+  } else {
+    if (totalWeight + weightValue > 100) {
+      alert("مجموع وزن‌ها نمی‌تواند بیشتر از 100% شود.");
+      return;
+    }
+
+    fetch(`${baseUrl}/goals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGoal)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('خطا در ذخیره در سرور');
+        return res.json();
+      })
+      .then(savedGoal => {
+        const updatedGoals = [...goals, savedGoal];
+        setGoals(updatedGoals);
+        resetForm();
+      })
+      .catch(err => {
+        console.error('❌ خطا در ذخیره هدف:', err);
+        alert('خطا در ذخیره در سرور');
+      });
+  }
+};
+
 
   // Reset form
   const resetForm = () => {
