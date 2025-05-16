@@ -88,5 +88,12 @@ router.get('/department-goals/alerts', async (req, res) => {
     res.status(500).json({ error: "خطای داخلی سرور" });
   }
 });
+router.get('/test-api-key', async (req, res) => {
+  if (process.env.OPENAI_API_KEY) {
+    res.json({ status: "✅ OPENAI_API_KEY is loaded and available." });
+  } else {
+    res.status(500).json({ status: "❌ OPENAI_API_KEY is not loaded." });
+  }
+});
 
 module.exports = router;
