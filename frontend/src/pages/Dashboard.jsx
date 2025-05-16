@@ -13,7 +13,7 @@ const OrgGoalsAlerts = () => {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/goals/alerts`) // ✅ حذف /api
+      .get(`${process.env.REACT_APP_API_URL}/api/goals/alerts`)  // ✅ مسیر درست با /api
       .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err));
   }, []);
@@ -44,7 +44,7 @@ const DeptGoalsAlerts = () => {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/department-goals/alerts`) // ✅ حذف /api
+      .get(`${process.env.REACT_APP_API_URL}/api/department-goals/alerts`)  // ✅ مسیر درست با /api
       .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err));
   }, []);
