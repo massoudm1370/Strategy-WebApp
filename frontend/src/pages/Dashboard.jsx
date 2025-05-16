@@ -7,10 +7,6 @@ import { saveAs } from "file-saver";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL;
-
-import { useEffect, useState } from "react";
-import axios from "axios";
-
 // 📌 هشدار اهداف سازمانی
 const OrgGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
