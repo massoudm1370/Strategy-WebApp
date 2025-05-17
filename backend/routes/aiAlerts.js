@@ -8,18 +8,18 @@ console.log('OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY ? '✅ Loaded'
 const useAI = process.env.USE_AI_ALERTS === 'true';
 const openRouterModelUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
-// 📌 تابع آماده سازی هدر
+// 📌 آماده‌سازی هدر
 const prepareHeaders = () => ({
   'Content-Type': 'application/json',
   'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
 });
 
-// 📌 درخواست به OpenRouter با GPT-3.5 Turbo
+// 📌 درخواست به OpenRouter با GPT-3.5
 const requestOpenRouter = async (prompt) => {
   const response = await axios.post(
     openRouterModelUrl,
     {
-      model: "openai/gpt-3.5-turbo",  // ✅ تغییر به GPT-3.5 Turbo
+      model: "openai/gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }]
     },
     { headers: prepareHeaders(), timeout: 10000 }
@@ -31,15 +31,15 @@ const requestOpenRouter = async (prompt) => {
 router.get('/goals/alerts', async (req, res) => {
   try {
     const db = req.db;
-    const stmt = db.prepare("SELECT id, title, currentStatus FROM goals WHERE currentStatus < 50");
+    const stmt = db.prepare("SELECT id, title, currentStatus FROM goals WHERE currentStatus < 40");
     const keyResults = stmt.all();
 
     if (!keyResults.length) {
-      return res.json({ alerts: "✅ همه اهداف سازمانی در وضعیت مناسبی هستند." });
+      return res.json({ alerts: "✅ همه اهداف سازمانی بالای 40 درصد هستند." });
     }
 
-    const list = keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n');
-    const prompt = `بر اساس داده‌های زیر، یک هشدار کوتاه و مشخص برای مدیر استراتژی بنویس. فقط یک جمله اجرایی بنویس.
+    const list = keyResults.map(kr => `هدف "${kr.title}" با وضعیت ${kr.currentStatus}%`).join('\n');
+    const prompt = `بر اساس داده‌های زیر، برای هر هدف یک هشدار کوتاه بنویس که با عنوان هدف و درصد شروع شود و در ادامه یک اقدام پیشنهادی ارائه شود. 
 داده‌ها:
 ${list}`;
 
@@ -60,15 +60,15 @@ ${list}`;
 router.get('/department-goals/alerts', async (req, res) => {
   try {
     const db = req.db;
-    const stmt = db.prepare("SELECT id, keyResult, finalAchievement FROM department_goals WHERE finalAchievement < 50");
+    const stmt = db.prepare("SELECT id, keyResult, finalAchievement FROM department_goals WHERE finalAchievement < 40");
     const keyResults = stmt.all();
 
     if (!keyResults.length) {
-      return res.json({ alerts: "✅ همه اهداف دپارتمانی در وضعیت مناسبی هستند." });
+      return res.json({ alerts: "✅ همه اهداف دپارتمانی بالای 40 درصد هستند." });
     }
 
-    const list = keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n');
-    const prompt = `بر اساس داده‌های زیر، یک هشدار کوتاه و مشخص برای مدیر استراتژی بنویس. فقط یک جمله اجرایی بنویس.
+    const list = keyResults.map(kr => `هدف "${kr.keyResult}" با وضعیت ${kr.finalAchievement}%`).join('\n');
+    const prompt = `بر اساس داده‌های زیر، برای هر هدف یک هشدار کوتاه بنویس که با عنوان هدف و درصد شروع شود و در ادامه یک اقدام پیشنهادی ارائه شود. 
 داده‌ها:
 ${list}`;
 
