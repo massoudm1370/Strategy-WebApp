@@ -10,68 +10,64 @@ const API_URL = process.env.REACT_APP_API_URL;
 // 📌 هشدار اهداف سازمانی
 const OrgGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/goals/alerts`)  // ✅ مسیر درست با /api
+      .get(`${process.env.REACT_APP_API_URL}/goals/alerts`)
       .then((res) => setAlerts(res.data.alerts))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div
-      style={{
-        backgroundColor: "#FFF8E1",
-        border: "1px solid #FFD54F",
-        borderRadius: "8px",
-        padding: "15px",
-        marginTop: "20px",
-        direction: "rtl",
-        textAlign: "right",
-      }}
-    >
-      <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>
-        ⚠️ هشدار عملکرد اهداف سازمانی
-      </h3>
-      {alerts ? <p>{alerts}</p> : <p>هیچ هشداری وجود ندارد.</p>}
-    </div>
+    <AlertCard
+      title="⚠️ هشدار عملکرد اهداف سازمانی"
+      content={loading ? "در حال بارگذاری..." : alerts || "هیچ هشداری وجود ندارد."}
+    />
   );
 };
 
 // 📌 هشدار اهداف دپارتمانی
 const DeptGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/department-goals/alerts`)  // ✅ مسیر درست با /api
+      .get(`${process.env.REACT_APP_API_URL}/department-goals/alerts`)
       .then((res) => setAlerts(res.data.alerts))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div
-      style={{
-        backgroundColor: "#FFF8E1",
-        border: "1px solid #FFD54F",
-        borderRadius: "8px",
-        padding: "15px",
-        marginTop: "20px",
-        direction: "rtl",
-        textAlign: "right",
-      }}
-    >
-      <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>
-        ⚠️ هشدار عملکرد اهداف دپارتمانی
-      </h3>
-      {alerts ? <p>{alerts}</p> : <p>هیچ هشداری وجود ندارد.</p>}
-    </div>
+    <AlertCard
+      title="⚠️ هشدار عملکرد اهداف دپارتمانی"
+      content={loading ? "در حال بارگذاری..." : alerts || "هیچ هشداری وجود ندارد."}
+    />
   );
 };
 
+// 📌 کامپوننت مشترک کارت هشدار
+const AlertCard = ({ title, content }) => (
+  <div
+    style={{
+      backgroundColor: "#FFF8E1",
+      border: "1px solid #FFD54F",
+      borderRadius: "8px",
+      padding: "15px",
+      marginTop: "20px",
+      direction: "rtl",
+      textAlign: "right",
+    }}
+  >
+    <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>{title}</h3>
+    <p>{content}</p>
+  </div>
+);
+
 export { OrgGoalsAlerts, DeptGoalsAlerts };
-
-
 
 // تابع محاسبه درصد موفقیت
 const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
