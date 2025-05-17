@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 console.log("✅ Dashboard component loaded");
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -16,14 +17,8 @@ const OrgGoalsAlerts = () => {
   const fetchAlerts = () => {
     setLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/goals/alerts`)
-      .then((res) => {
-        const data = res.data.alerts;
-        const content = typeof data === "object" && data.choices
-          ? data.choices[0]?.message?.content || "پاسخی دریافت نشد."
-          : data;
-        setAlerts(content);
-      })
+      .get(`${API_URL}/goals/alerts`)
+      .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
@@ -47,14 +42,8 @@ const DeptGoalsAlerts = () => {
   const fetchAlerts = () => {
     setLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/department-goals/alerts`)
-      .then((res) => {
-        const data = res.data.alerts;
-        const content = typeof data === "object" && data.choices
-          ? data.choices[0]?.message?.content || "پاسخی دریافت نشد."
-          : data;
-        setAlerts(content);
-      })
+      .get(`${API_URL}/department-goals/alerts`)
+      .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
@@ -70,7 +59,7 @@ const DeptGoalsAlerts = () => {
   );
 };
 
-// 📌 کامپوننت مشترک کارت هشدار با دکمه بروزرسانی
+// 📌 کارت هشدار با Markdown Rendering
 const AlertCard = ({ title, content, onRefresh }) => (
   <div
     style={{
@@ -84,7 +73,7 @@ const AlertCard = ({ title, content, onRefresh }) => (
     }}
   >
     <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>{title}</h3>
-    <p>{content}</p>
+    <ReactMarkdown>{content}</ReactMarkdown>
     <button
       onClick={onRefresh}
       style={{
