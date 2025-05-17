@@ -8,13 +8,11 @@ console.log('OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY ? '✅ Loaded'
 const useAI = process.env.USE_AI_ALERTS === 'true';
 const openRouterModelUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
-// 📌 آماده‌سازی هدر
 const prepareHeaders = () => ({
   'Content-Type': 'application/json',
   'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
 });
 
-// 📌 درخواست به OpenRouter با GPT-3.5
 const requestOpenRouter = async (prompt) => {
   const response = await axios.post(
     openRouterModelUrl,
@@ -27,19 +25,27 @@ const requestOpenRouter = async (prompt) => {
   return response.data;
 };
 
-// 📌 مسیر هشدار اهداف سازمانی
+// 📌 هشدار اهداف سازمانی
 router.get('/goals/alerts', async (req, res) => {
   try {
     const db = req.db;
-    const stmt = db.prepare("SELECT id, title, currentStatus FROM goals WHERE currentStatus < 40");
-    const keyResults = stmt.all();
+    const allGoals = db.prepare("SELECT id, title, currentStatus FROM goals").all();
 
-    if (!keyResults.length) {
+    if (!allGoals.length) {
+      return res.json({ alerts: "⚠️ هنوز هیچ هدفی ثبت نشده است." });
+    }
+
+    const riskyGoals = allGoals.filter(kr => kr.currentStatus < 40);
+
+    if (!riskyGoals.length) {
       return res.json({ alerts: "✅ همه اهداف سازمانی بالای 40 درصد هستند." });
     }
 
-    const list = keyResults.map(kr => `هدف "${kr.title}" با وضعیت ${kr.currentStatus}%`).join('\n');
-    const prompt = `بر اساس داده‌های زیر، برای هر هدف یک هشدار کوتاه بنویس که با عنوان هدف و درصد شروع شود و در ادامه یک اقدام پیشنهادی ارائه شود. 
+    const list = riskyGoals
+      .map(kr => `**${kr.title} (${kr.currentStatus}%)**`)
+      .join('\n');
+
+    const prompt = `بر اساس داده‌های زیر، برای هر هدف یک هشدار کوتاه بنویس که با عنوان هدف و درصد به صورت Bold شروع شود و در ادامه یک اقدام پیشنهادی ارائه شود. هر هشدار در یک خط جداگانه باشد.
 داده‌ها:
 ${list}`;
 
@@ -56,19 +62,27 @@ ${list}`;
   }
 });
 
-// 📌 مسیر هشدار اهداف دپارتمانی
+// 📌 هشدار اهداف دپارتمانی
 router.get('/department-goals/alerts', async (req, res) => {
   try {
     const db = req.db;
-    const stmt = db.prepare("SELECT id, keyResult, finalAchievement FROM department_goals WHERE finalAchievement < 40");
-    const keyResults = stmt.all();
+    const allDeptGoals = db.prepare("SELECT id, keyResult, finalAchievement FROM department_goals").all();
 
-    if (!keyResults.length) {
+    if (!allDeptGoals.length) {
+      return res.json({ alerts: "⚠️ هنوز هیچ هدفی ثبت نشده است." });
+    }
+
+    const riskyGoals = allDeptGoals.filter(kr => kr.finalAchievement < 40);
+
+    if (!riskyGoals.length) {
       return res.json({ alerts: "✅ همه اهداف دپارتمانی بالای 40 درصد هستند." });
     }
 
-    const list = keyResults.map(kr => `هدف "${kr.keyResult}" با وضعیت ${kr.finalAchievement}%`).join('\n');
-    const prompt = `بر اساس داده‌های زیر، برای هر هدف یک هشدار کوتاه بنویس که با عنوان هدف و درصد شروع شود و در ادامه یک اقدام پیشنهادی ارائه شود. 
+    const list = riskyGoals
+      .map(kr => `**${kr.keyResult} (${kr.finalAchievement}%)**`)
+      .join('\n');
+
+    const prompt = `بر اساس داده‌های زیر، برای هر هدف یک هشدار کوتاه بنویس که با عنوان هدف و درصد به صورت Bold شروع شود و در ادامه یک اقدام پیشنهادی ارائه شود. هر هشدار در یک خط جداگانه باشد.
 داده‌ها:
 ${list}`;
 
