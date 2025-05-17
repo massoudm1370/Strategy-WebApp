@@ -17,7 +17,13 @@ const OrgGoalsAlerts = () => {
     setLoading(true);
     axios
       .get(`${process.env.REACT_APP_API_URL}/goals/alerts`)
-      .then((res) => setAlerts(res.data.alerts))
+      .then((res) => {
+        const data = res.data.alerts;
+        const content = typeof data === "object" && data.choices
+          ? data.choices[0]?.message?.content || "پاسخی دریافت نشد."
+          : data;
+        setAlerts(content);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
@@ -42,7 +48,13 @@ const DeptGoalsAlerts = () => {
     setLoading(true);
     axios
       .get(`${process.env.REACT_APP_API_URL}/department-goals/alerts`)
-      .then((res) => setAlerts(res.data.alerts))
+      .then((res) => {
+        const data = res.data.alerts;
+        const content = typeof data === "object" && data.choices
+          ? data.choices[0]?.message?.content || "پاسخی دریافت نشد."
+          : data;
+        setAlerts(content);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
@@ -90,6 +102,7 @@ const AlertCard = ({ title, content, onRefresh }) => (
 );
 
 export { OrgGoalsAlerts, DeptGoalsAlerts };
+
 
 // تابع محاسبه درصد موفقیت
 const calculateSuccessPercentage = (ytdValue, currentStatus, target, failure) => {
