@@ -2,18 +2,29 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 require('dotenv').config();
-console.log('HUGGINGFACE_API_KEY:', process.env.HUGGINGFACE_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
+
+console.log('OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
 
 const useAI = process.env.USE_AI_ALERTS === 'true';
-const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/bigscience/bloom-560m';
+const openRouterModelUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
 // 📌 تابع آماده سازی هدر
-const prepareHeaders = () => {
-  const headers = { 'Content-Type': 'application/json' };
-  if (process.env.HUGGINGFACE_API_KEY) {
-    headers['Authorization'] = `Bearer ${process.env.HUGGINGFACE_API_KEY}`;
-  }
-  return headers;
+const prepareHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
+});
+
+// 📌 درخواست به OpenRouter
+const requestOpenRouter = async (prompt) => {
+  const response = await axios.post(
+    openRouterModelUrl,
+    {
+      model: "mistralai/mistral-7b-instruct",
+      messages: [{ role: "user", content: prompt }]
+    },
+    { headers: prepareHeaders(), timeout: 10000 }
+  );
+  return response.data;
 };
 
 // 📌 مسیر هشدار اهداف سازمانی
@@ -27,17 +38,12 @@ router.get('/goals/alerts', async (req, res) => {
       return res.json({ alerts: "✅ همه اهداف سازمانی در وضعیت مناسبی هستند." });
     }
 
+    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
     if (useAI) {
-      const aiPrompt = `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
-      const huggingFaceResponse = await axios.post(
-        huggingFaceModelUrl,
-        { inputs: aiPrompt },
-        { headers: prepareHeaders(), timeout: 10000 }
-      );
-      return res.json({ alerts: huggingFaceResponse.data });
+      const aiResponse = await requestOpenRouter(message);
+      return res.json({ alerts: aiResponse });
     }
 
-    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
     res.json({ alerts: message });
 
   } catch (error) {
@@ -57,17 +63,12 @@ router.get('/department-goals/alerts', async (req, res) => {
       return res.json({ alerts: "✅ همه اهداف دپارتمانی در وضعیت مناسبی هستند." });
     }
 
+    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`;
     if (useAI) {
-      const aiPrompt = `اهداف زیر کمتر از 50 درصد پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`;
-      const huggingFaceResponse = await axios.post(
-        huggingFaceModelUrl,
-        { inputs: aiPrompt },
-        { headers: prepareHeaders(), timeout: 10000 }
-      );
-      return res.json({ alerts: huggingFaceResponse.data });
+      const aiResponse = await requestOpenRouter(message);
+      return res.json({ alerts: aiResponse });
     }
 
-    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`;
     res.json({ alerts: message });
 
   } catch (error) {
@@ -76,17 +77,13 @@ router.get('/department-goals/alerts', async (req, res) => {
   }
 });
 
-// 📌 مسیر تست مستقیم Hugging Face
-router.get('/test-openai', async (req, res) => {
+// 📌 مسیر تست OpenRouter
+router.get('/test-openrouter', async (req, res) => {
   try {
-    const response = await axios.post(
-      huggingFaceModelUrl,
-      { inputs: "Hello from DigiExpress" },
-      { headers: prepareHeaders(), timeout: 10000 }
-    );
-    res.json({ reply: response.data });
+    const aiResponse = await requestOpenRouter("Hello from DigiExpress");
+    res.json({ reply: aiResponse });
   } catch (error) {
-    console.error("❌ Error contacting Hugging Face:", error.message);
+    console.error("❌ Error contacting OpenRouter:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

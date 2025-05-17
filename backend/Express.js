@@ -1,11 +1,30 @@
-// routes/aiAlerts.js
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/google/flan-t5-small';
-const huggingFaceApiKey = process.env.HUGGINGFACE_API_KEY;
+const openRouterModelUrl = 'https://openrouter.ai/api/v1/chat/completions';
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
 
+// 📌 تابع آماده سازی هدر
+const prepareHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${openRouterApiKey}`
+});
+
+// 📌 تابع درخواست به OpenRouter
+const requestOpenRouter = async (prompt) => {
+  const response = await axios.post(
+    openRouterModelUrl,
+    {
+      model: "mistralai/mistral-7b-instruct",
+      messages: [{ role: "user", content: prompt }]
+    },
+    { headers: prepareHeaders(), timeout: 20000 }
+  );
+  return response.data;
+};
+
+// 📌 مسیر هشدار Key Results
 router.get('/keyresults/alerts', async (req, res) => {
   try {
     const db = req.db;
@@ -25,21 +44,12 @@ router.get('/keyresults/alerts', async (req, res) => {
       (kr) => `- ${kr.title}: ${kr.successPercentage}%`
     ).join('\n')}\nلطفاً یک پیام هشدار کوتاه و کاربردی برای مدیر استراتژیک ایجاد کن.`;
 
-    const huggingFaceResponse = await axios.post(
-      huggingFaceModelUrl,
-      { inputs: userPrompt },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${huggingFaceApiKey}`,
-        },
-        timeout: 20000,
-      }
-    );
+    const aiResponse = await requestOpenRouter(userPrompt);
 
-    res.json({ alerts: huggingFaceResponse.data });
+    res.json({ alerts: aiResponse });
+
   } catch (error) {
-    console.error(error);
+    console.error("❌ خطا در /keyresults/alerts:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

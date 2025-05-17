@@ -7,23 +7,28 @@ import { saveAs } from "file-saver";
 import axios from "axios";
 console.log("✅ Dashboard component loaded");
 const API_URL = process.env.REACT_APP_API_URL;
+
 // 📌 هشدار اهداف سازمانی
 const OrgGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchAlerts = () => {
+    setLoading(true);
     axios
       .get(`${process.env.REACT_APP_API_URL}/goals/alerts`)
       .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(fetchAlerts, []);
 
   return (
     <AlertCard
       title="⚠️ هشدار عملکرد اهداف سازمانی"
       content={loading ? "در حال بارگذاری..." : alerts || "هیچ هشداری وجود ندارد."}
+      onRefresh={fetchAlerts}
     />
   );
 };
@@ -33,24 +38,28 @@ const DeptGoalsAlerts = () => {
   const [alerts, setAlerts] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchAlerts = () => {
+    setLoading(true);
     axios
       .get(`${process.env.REACT_APP_API_URL}/department-goals/alerts`)
       .then((res) => setAlerts(res.data.alerts))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(fetchAlerts, []);
 
   return (
     <AlertCard
       title="⚠️ هشدار عملکرد اهداف دپارتمانی"
       content={loading ? "در حال بارگذاری..." : alerts || "هیچ هشداری وجود ندارد."}
+      onRefresh={fetchAlerts}
     />
   );
 };
 
-// 📌 کامپوننت مشترک کارت هشدار
-const AlertCard = ({ title, content }) => (
+// 📌 کامپوننت مشترک کارت هشدار با دکمه بروزرسانی
+const AlertCard = ({ title, content, onRefresh }) => (
   <div
     style={{
       backgroundColor: "#FFF8E1",
@@ -64,6 +73,19 @@ const AlertCard = ({ title, content }) => (
   >
     <h3 style={{ color: "#F57C00", marginBottom: "10px" }}>{title}</h3>
     <p>{content}</p>
+    <button
+      onClick={onRefresh}
+      style={{
+        marginTop: "10px",
+        backgroundColor: "#FFD54F",
+        border: "none",
+        padding: "5px 10px",
+        borderRadius: "4px",
+        cursor: "pointer",
+      }}
+    >
+      🔄 بروزرسانی
+    </button>
   </div>
 );
 
