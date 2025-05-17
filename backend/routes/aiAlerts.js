@@ -14,12 +14,12 @@ const prepareHeaders = () => ({
   'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
 });
 
-// 📌 درخواست به OpenRouter
+// 📌 درخواست به OpenRouter با GPT-3.5 Turbo
 const requestOpenRouter = async (prompt) => {
   const response = await axios.post(
     openRouterModelUrl,
     {
-      model: "mistralai/mistral-7b-instruct",
+      model: "openai/gpt-3.5-turbo",  // ✅ تغییر به GPT-3.5 Turbo
       messages: [{ role: "user", content: prompt }]
     },
     { headers: prepareHeaders(), timeout: 10000 }
@@ -38,13 +38,17 @@ router.get('/goals/alerts', async (req, res) => {
       return res.json({ alerts: "✅ همه اهداف سازمانی در وضعیت مناسبی هستند." });
     }
 
-    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n')}`;
+    const list = keyResults.map(kr => `- ${kr.title}: ${kr.currentStatus}%`).join('\n');
+    const prompt = `بر اساس داده‌های زیر، یک هشدار کوتاه و مشخص برای مدیر استراتژی بنویس. فقط یک جمله اجرایی بنویس.
+داده‌ها:
+${list}`;
+
     if (useAI) {
-      const aiResponse = await requestOpenRouter(message);
+      const aiResponse = await requestOpenRouter(prompt);
       return res.json({ alerts: aiResponse });
     }
 
-    res.json({ alerts: message });
+    res.json({ alerts: list });
 
   } catch (error) {
     console.error("❌ خطای داخلی در /goals/alerts:", error.message);
@@ -63,13 +67,17 @@ router.get('/department-goals/alerts', async (req, res) => {
       return res.json({ alerts: "✅ همه اهداف دپارتمانی در وضعیت مناسبی هستند." });
     }
 
-    const message = `اهداف زیر کمتر از 50% پیشرفت داشته‌اند:\n${keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n')}`;
+    const list = keyResults.map(kr => `- ${kr.keyResult}: ${kr.finalAchievement}%`).join('\n');
+    const prompt = `بر اساس داده‌های زیر، یک هشدار کوتاه و مشخص برای مدیر استراتژی بنویس. فقط یک جمله اجرایی بنویس.
+داده‌ها:
+${list}`;
+
     if (useAI) {
-      const aiResponse = await requestOpenRouter(message);
+      const aiResponse = await requestOpenRouter(prompt);
       return res.json({ alerts: aiResponse });
     }
 
-    res.json({ alerts: message });
+    res.json({ alerts: list });
 
   } catch (error) {
     console.error("❌ خطای داخلی در /department-goals/alerts:", error.message);
@@ -80,7 +88,7 @@ router.get('/department-goals/alerts', async (req, res) => {
 // 📌 مسیر تست OpenRouter
 router.get('/test-openrouter', async (req, res) => {
   try {
-    const aiResponse = await requestOpenRouter("Hello from DigiExpress");
+    const aiResponse = await requestOpenRouter("سلام، تست ارتباط از DigiExpress.");
     res.json({ reply: aiResponse });
   } catch (error) {
     console.error("❌ Error contacting OpenRouter:", error.message);
