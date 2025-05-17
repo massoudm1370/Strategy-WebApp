@@ -5,7 +5,7 @@ require('dotenv').config();
 console.log('HUGGINGFACE_API_KEY:', process.env.HUGGINGFACE_API_KEY ? '✅ Loaded' : '❌ Not Loaded');
 
 const useAI = process.env.USE_AI_ALERTS === 'true';
-const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/google/flan-t5-small';
+const huggingFaceModelUrl = 'https://api-inference.huggingface.co/models/bigscience/bloom-560m';
 
 // 📌 تابع آماده سازی هدر
 const prepareHeaders = () => {
